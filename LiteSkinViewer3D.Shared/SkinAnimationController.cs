@@ -1,14 +1,6 @@
-﻿using Avalonia.Controls.Documents;
-using LiteSkinViewer3D.Shared.Enums;
+﻿using LiteSkinViewer3D.Shared.Enums;
 using LiteSkinViewer3D.Shared.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LiteSkinViewer3D.Shared;
 
@@ -32,22 +24,21 @@ public sealed class SkinAnimationState {
 /// </summary>
 public class SkinAnimationController {
     private int _frame = 0;
-    private double _tickAccum = 0;
-    private double _idleTimer = 0;
+    private double _tickAccum = 0f;
+    private double _idleTimer = 0f;
     private bool _closed = false;
-
-    private ISkinAnimation _activeIdle;
     private readonly Random _rng = new();
 
-    public bool IsEnable { get; set; }
-    public SkinType SkinType { get; set; }
-    public ISkinAnimation Controller { get; set; }
-    public SkinAnimationState State { get; } = new();
-    public double IdleIntervalSeconds { get; set; } = 10.0;
+    private IModelIdleAnimation? _currentIdle;
 
-    public SkinAnimationController(ISkinAnimation controller = default!) {
-        Controller = controller ?? new LookAroundAnimation();
-        _activeIdle = Controller;
+    public IModelAnimation Controller { get; set; }
+    public SkinAnimationState State { get; } = new();
+    public SkinType SkinType { get; set; }
+    public bool IsEnable { get; set; } = true;
+    public float IdleIntervalSeconds { get; set; } = 5f;
+
+    public SkinAnimationController(IModelAnimation? controller = null) {
+        Controller = controller ?? new DefaultAnimation();
     }
 
     public void Close() {
@@ -61,89 +52,87 @@ public class SkinAnimationController {
         _tickAccum += deltaTime;
         _idleTimer += deltaTime;
 
-        // 帧控制
-        while (_tickAccum > 0.01) {
-            _tickAccum -= 0.01;
+        while (_tickAccum >= 0.01f) {
+            _tickAccum -= 0.01f;
             _frame = (_frame + 1) % 120;
         }
 
-        // 每过指定秒数，强制执行 Idle 动画
-        if (_idleTimer >= IdleIntervalSeconds &&
-            Controller.EnableIdle &&
-            Controller.IdleAnimations.Count > 0) {
-            _idleTimer = 0;
+        if (_currentIdle != null) {
+            if (!_currentIdle.IsFinished) {
+                _currentIdle.Tick(State, _frame, deltaTime, SkinType);
+            } else if (!_currentIdle.IsExited) {
+                _currentIdle.ExitedTick(State, _frame, deltaTime, SkinType);
+            } else {
+                _currentIdle = null;
+                _idleTimer = 0f;
+            }
+        } else {
+            if (_idleTimer >= IdleIntervalSeconds &&
+                Controller.EnableIdle &&
+                Controller.IdleAnimations.Count > 0) {
+                _idleTimer = 0f;
+                var pool = Controller.IdleAnimations;
+                _currentIdle = pool.Count == 1 ? pool[0] : pool[_rng.Next(pool.Count)];
+                _currentIdle.OnStart(State);
+            }
 
-            _activeIdle = Controller.IdleAnimations.Count switch {
-                1 => Controller.IdleAnimations[0],
-                > 1 => Controller.IdleAnimations[_rng.Next(Controller.IdleAnimations.Count)],
-                _ => Controller
-            };
-
-            _activeIdle.OnIdleStart(State);
+            Controller.Tick(State, _frame, deltaTime, SkinType);
         }
 
-        _activeIdle.Tick(State, _frame, deltaTime, SkinType);
         return !_closed;
     }
 }
 
-public sealed class DefaultAnimation : ISkinAnimation {
+public sealed class DefaultAnimation : IModelAnimation {
     public bool EnableIdle => true;
-    public IReadOnlyList<ISkinAnimation> IdleAnimations => [
-        new LookAroundAnimation()
+
+    public IReadOnlyList<IModelIdleAnimation> IdleAnimations => [
+        new CuddleAnimation(),
+        new LookAroundAnimation(),
     ];
 
     public void OnIdleStart(SkinAnimationState state) {
-        state.Time = 0f; // 初始化时间流
+        state.Time = 0f;
     }
 
     public void Tick(SkinAnimationState state, int frame, double deltaTime, SkinType type) {
         state.Time += (float)deltaTime * 1f; // 节奏调慢
 
-        float t = state.Time * MathF.PI * 2;
-        float tSlow = state.Time * MathF.PI;
-
-        float pulse = Ease((MathF.Sin(t * 0.5f) + 1f) / 2f);
-
-        // 💪 手臂运动：左右甩 + 向后张 + 前后轻摇
+        float t = state.Time * MathF.PI;
         float armZ = MathF.Sin(t * 0.9f) * 7.0f;
-        float armX = pulse * 5.0f;
         float armY = MathF.Sin(t * 0.4f) * 13.0f;
 
         state.ArmLeft.Z = armZ;
-        state.ArmRight.Z = -armZ;
-
-        state.ArmLeft.X = armX;
-        state.ArmRight.X = armX;
-
+        state.ArmRight.Z = armZ;
         state.ArmLeft.Y = armY;
-        state.ArmRight.Y = -armY;
-
-        state.Head.Y = MathF.Sin(tSlow * 0.8f + 0.5f) * 5.0f;
-        state.Cape = 0.25f + MathF.Sin(tSlow * 0.85f + 0.5f) * 0.5f;
-
-        static float Ease(float x) => -(MathF.Cos(MathF.PI * x) - 1f) / 2f;
+        state.ArmRight.Y = armY;
+        state.Head.Y = MathF.Sin(t * 0.8f + 0.5f) * 5.0f;
+        state.Cape = 0.25f + MathF.Sin(t * 0.85f + 0.5f) * 0.5f;
     }
 }
 
-public sealed class LookAroundAnimation : ISkinAnimation {
-    public bool EnableIdle => true;
-    public IReadOnlyList<ISkinAnimation> IdleAnimations => [];
+public sealed class LookAroundAnimation : IModelIdleAnimation {
+    public float Elapsed => _time;
+    public bool IsFinished => _time >= Duration;
+    public bool IsExiting => _exiting;
+    public bool IsExited => _exitTime >= 0.4f && IsNearlyZero(_currentZ); public float Duration { get; set; } = 10.0f;
 
     private float _time = 0f;
     private float _yaw = 0f;
+    private float _currentZ = 0f;
+    private float _exitTime = 0f;
     private float _targetYaw = 0f;
     private float _switchTimer = 0f;
-    private float _switchInterval = 1.5f;
     private float _lookShockTimer = 0f;
+    private float _switchInterval = 1.5f;
+    private bool _exiting = false;
     private readonly Random _rng = new();
 
-    public void OnIdleStart(SkinAnimationState state) {
+    public void OnStart(SkinAnimationState state) {
         _time = 0f;
         _yaw = state.Head.Z;
         _targetYaw = GetRandomYaw();
         _switchTimer = 0f;
-        _lookShockTimer = 0f;
     }
 
     public void Tick(SkinAnimationState state, int frame, double deltaTime, SkinType type) {
@@ -179,18 +168,190 @@ public sealed class LookAroundAnimation : ISkinAnimation {
 
         state.Body.Z = MathF.Sin(_time * 1.6f) * 3.2f - 2.5f;
         state.Cape = 0.25f + MathF.Sin(_time * 1.2f + 0.4f) * 0.25f;
+
+        if (IsFinished && !_exiting) _exiting = true;
     }
 
-    private float GetRandomYaw() {
-        return _rng.NextSingle() switch {
-            < 0.3f => -50f,
-            < 0.6f => 0f,
-            _ => 50f
-        };
+    public void ExitedTick(SkinAnimationState state, int frame, double deltaTime, SkinType type) {
+        _exitTime += (float)deltaTime;
+
+        _currentZ = SmoothApproach(_currentZ, 0f, (float)deltaTime, 0.25f);
+        float headX = SmoothApproach(state.Head.X, 0f, (float)deltaTime, 0.25f);
+
+        state.Head.Z = _currentZ;
+        state.Head.X = headX;
     }
 
-    private static float SmoothApproach(float current, float target, float deltaTime, float smoothTime) {
-        float t = 1f - MathF.Exp(-deltaTime * 10f / smoothTime);
+    private float GetRandomYaw() => _rng.Next(3) switch {
+        0 => -50f,
+        1 => 0f,
+        _ => 50f
+    };
+
+    private static float SmoothApproach(float current, float target, float dt, float smoothTime) {
+        float t = 1f - MathF.Exp(-dt * 10f / smoothTime);
         return current + (target - current) * t;
     }
+
+    private static bool IsNearlyZero(float v) => MathF.Abs(v) < 0.05f;
+}
+
+public sealed class CuddleAnimation : IModelIdleAnimation {
+    public float Duration { get; set; } = 4.0f;
+    public float PlaybackDuration { get; set; } = 1.0f;
+    public float ExitSmoothTime { get; set; } = 1.0f;
+
+    public float Elapsed => _lifeTime;
+    public bool IsFinished => _lifeTime >= Duration;
+    public bool IsExiting => _exiting;
+    public bool IsExited => _exitTime >= 0.4f && AllZero();
+
+    private float _lifeTime = 0f;
+    private float _playTime = 0f;
+    private float _exitTime = 0f;
+    private bool _exiting = false;
+    private bool _poseLocked = false;
+
+    private float _rightX, _rightY, _rightZ;
+    private float _leftX, _leftY, _leftZ;
+    private float _headX, _headY, _headZ;
+    private float _bodyX, _bodyY, _bodyZ;
+    private float _legLY, _legRY;
+    private float _cape;
+
+    private float _t = 0f;
+
+    public void OnStart(SkinAnimationState state) {
+        _lifeTime = 0f;
+        _playTime = 0f;
+        _exitTime = 0f;
+        _exiting = false;
+        _poseLocked = false;
+        _t = -PlaybackDuration;
+    }
+
+    public void Tick(SkinAnimationState state, int frame, double deltaTime, SkinType type) {
+        float dt = (float)deltaTime;
+        _lifeTime += dt;
+        _t += dt;
+
+        if (!_poseLocked) {
+            _playTime += dt;
+            float tNorm = MathF.Min(_playTime / PlaybackDuration, 1f);
+            float ease = EaseOut(tNorm);
+
+            _leftX = Lerp(0, 280, ease);
+            _leftY = Lerp(0, -460, ease);
+            _leftZ = Lerp(0, 280, ease);
+
+            _rightX = Lerp(0, 280, ease);
+            _rightY = Lerp(0, 460, ease);
+            _rightZ = Lerp(0, 280, ease);
+
+            _headX = Lerp(0, 40, ease);
+            _headY = Lerp(0, -40, ease);
+            _headZ = 0f;
+
+            _bodyX = 0f;
+            _bodyY = Lerp(0, -30, ease);
+            _bodyZ = 0f;
+
+            _legLY = Lerp(0, 30, ease);
+            _legRY = Lerp(0, -30, ease);
+
+            _cape = Lerp(0, -5, ease);
+
+            if (_playTime >= PlaybackDuration)
+                _poseLocked = true;
+        } else {
+            float wiggle = MathF.Sin(_t * 1.8f) * 6f;
+            float pulse = MathF.Sin(_t * 2.4f + 1f) * 9f;
+            float nod = MathF.Sin(_t * 1.2f + 0.8f) * 5f;
+
+            _rightY = 460f + pulse;
+            _rightZ = 280f + wiggle;
+
+            _leftY = -460f + pulse * 0.7f;
+            _leftZ = 280f - wiggle * 0.85f;
+
+            _headY = -40f + MathF.Sin(_t * 1.4f) * 4.5f;
+            _headZ = MathF.Sin(_t * 1.1f + 0.3f) * 3.2f;
+            _headX = 40f + nod;
+
+            _cape = -5f + MathF.Sin(_t * 1.9f + 1.5f) * 0.5f;
+        }
+
+        ApplyState(state);
+        if (!_exiting && IsFinished)
+            _exiting = true;
+    }
+
+    public void ExitedTick(SkinAnimationState state, int frame, double deltaTime, SkinType type) {
+        float dt = (float)deltaTime;
+        _exitTime += dt;
+
+        _leftX = SmoothApproach(_leftX, 0f, dt, ExitSmoothTime);
+        _leftY = SmoothApproach(_leftY, 0f, dt, ExitSmoothTime);
+        _leftZ = SmoothApproach(_leftZ, 0f, dt, ExitSmoothTime);
+
+        _rightX = SmoothApproach(_rightX, 0f, dt, ExitSmoothTime);
+        _rightY = SmoothApproach(_rightY, 0f, dt, ExitSmoothTime);
+        _rightZ = SmoothApproach(_rightZ, 0f, dt, ExitSmoothTime);
+
+        _headX = SmoothApproach(_headX, 0f, dt, ExitSmoothTime);
+        _headY = SmoothApproach(_headY, 0f, dt, ExitSmoothTime);
+        _headZ = SmoothApproach(_headZ, 0f, dt, ExitSmoothTime);
+
+        _bodyX = SmoothApproach(_bodyX, 0f, dt, ExitSmoothTime);
+        _bodyY = SmoothApproach(_bodyY, 0f, dt, ExitSmoothTime);
+        _bodyZ = SmoothApproach(_bodyZ, 0f, dt, ExitSmoothTime);
+
+        _legLY = SmoothApproach(_legLY, 0f, dt, ExitSmoothTime);
+        _legRY = SmoothApproach(_legRY, 0f, dt, ExitSmoothTime);
+
+        _cape = SmoothApproach(_cape, 0f, dt, ExitSmoothTime);
+
+        ApplyState(state);
+    }
+
+    private void ApplyState(SkinAnimationState state) {
+        state.ArmLeft.X = _leftX;
+        state.ArmLeft.Y = _leftY;
+        state.ArmLeft.Z = _leftZ;
+
+        state.ArmRight.X = _rightX;
+        state.ArmRight.Y = _rightY;
+        state.ArmRight.Z = _rightZ;
+
+        state.Head.X = _headX;
+        state.Head.Y = _headY;
+        state.Head.Z = _headZ;
+
+        state.Body.X = _bodyX;
+        state.Body.Y = _bodyY;
+        state.Body.Z = _bodyZ;
+
+        state.LegLeft.Y = _legLY;
+        state.LegRight.Y = _legRY;
+
+        state.Cape = _cape;
+    }
+
+    private static float Lerp(float a, float b, float t) =>
+        a + (b - a) * t;
+
+    private static float EaseOut(float x) =>
+        1f - MathF.Pow(1f - x, 3f);
+
+    private static float SmoothApproach(float current, float target, float dt, float smoothTime) =>
+        current + (target - current) * (1f - MathF.Exp(-dt * 10f / smoothTime));
+
+    private static bool IsNearlyZero(float v) => MathF.Abs(v) < 0.05f;
+
+    private bool AllZero() =>
+        IsNearlyZero(_rightX) && IsNearlyZero(_rightY) && IsNearlyZero(_rightZ) &&
+        IsNearlyZero(_leftX) && IsNearlyZero(_leftY) && IsNearlyZero(_leftZ) &&
+        IsNearlyZero(_headX) && IsNearlyZero(_headY) && IsNearlyZero(_headZ) &&
+        IsNearlyZero(_bodyX) && IsNearlyZero(_bodyY) && IsNearlyZero(_bodyZ) &&
+        IsNearlyZero(_legLY) && IsNearlyZero(_legRY) && IsNearlyZero(_cape);
 }

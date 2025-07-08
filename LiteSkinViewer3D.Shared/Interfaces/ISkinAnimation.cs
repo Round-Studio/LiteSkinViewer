@@ -3,9 +3,9 @@
 namespace LiteSkinViewer3D.Shared.Interfaces;
 
 /// <summary>
-/// 皮肤动画统一接口
+/// 模型动画统一接口
 /// </summary>
-public interface ISkinAnimation {
+public interface IModelAnimation {
 
     /// <summary>
     /// 是否启用待机系统
@@ -15,7 +15,7 @@ public interface ISkinAnimation {
     /// <summary>
     /// 待机动画
     /// </summary>
-    IReadOnlyList<ISkinAnimation> IdleAnimations { get; }
+    IReadOnlyList<IModelIdleAnimation> IdleAnimations { get; }
 
     /// <summary>
     /// 在动画进入 Idle 状态时触发
