@@ -334,10 +334,6 @@ public abstract class SkinViewerBase {
         Error?.Invoke(this, data);
     }
 
-    //protected void OnStateChange(StateType data) {
-    //    State?.Invoke(this, data);
-    //}
-
     protected Matrix4x4 GetMatrix4(ModelComponent component) {
         bool enable = _animation;
         float armWidth = _skinType == SkinType.Slim ? 1.375f : 1.5f;

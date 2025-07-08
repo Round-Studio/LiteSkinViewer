@@ -4,6 +4,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="LiteSkinViewer3D.Simple.MainWindow"
+		xmlns:lsv="using:LiteSkinViewer3D.Avalonia.Controls"
         Title="LiteSkinViewer3D.Simple">
-    Welcome to Avalonia!
+	<lsv:SkinRender3D Focusable="True"
+					  Background="red"
+					  Name="skinViewer"
+					  CapeVisibility="True"/>
 </Window>

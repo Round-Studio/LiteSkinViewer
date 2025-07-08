@@ -217,14 +217,16 @@ internal static class GLSLSource {
             vec3 lightColor = vec3(1.0, 1.0, 1.0);
             float ambientStrength = 0.15;
             vec3 lightPos = vec3(0, 1, 5);
-            
+        
             vec3 ambient = ambientStrength * lightColor;
             vec3 norm = normalize(normalIn);
             vec3 lightDir = normalize(lightPos - fragPosIn);
-            float diff = max(dot(norm, lightDir), 0.0);
+        
+            // 半兰伯特光照
+            float diff = dot(norm, lightDir) * 0.5 + 0.5;
             vec3 diffuse = diff * lightColor;
-            
-            vec3 result = (ambient + diffuse);
+        
+            vec3 result = ambient + diffuse;
             FragColor = COMPAT_TEXTURE(texture0, texIn) * vec4(result, 1.0);
         }
     """;

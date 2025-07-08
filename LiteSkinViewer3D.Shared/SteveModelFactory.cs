@@ -11,10 +11,10 @@ public static class SteveModelFactory {
     /// </summary>
     public static SteveMeshModel CreateBaseModel(SkinType type) {
         return new SteveMeshModel {
-            Head = CreateCube(),
-            Body = CreateCube(scaleY: 1.5f, scaleZ: 0.5f),
-            LeftArm = CreateCube(GetArmScale(type)),
-            RightArm = CreateCube(GetArmScale(type)),
+            Head = CreateCube(1.0f, 1.0f, 1.0f),
+            Body = CreateCube(1.0f, scaleY: 1.5f, scaleZ: 0.5f),
+            LeftArm = CreateCube(GetArmScale(type), 1.5f),
+            RightArm = CreateCube(GetArmScale(type), 1.5f),
             LeftLeg = CreateCube(scaleY: 1.5f, scaleZ: 0.5f),
             RightLeg = CreateCube(scaleY: 1.5f, scaleZ: 0.5f),
             Cape = CreateCube(scaleX: 1.25f, scaleY: 2f, scaleZ: 0.1f)
@@ -26,7 +26,7 @@ public static class SteveModelFactory {
     /// </summary>
     public static SteveMeshModel CreateOverlayModel(SkinType type) {
         var model = new SteveMeshModel {
-            Head = CreateCube(enlarge: 1.125f)
+            Head = CreateCube(1.0f, 1.0f, 1.0f, 1.125f)
         };
 
         if (type == SkinType.Legacy)
