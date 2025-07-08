@@ -25,7 +25,7 @@ public sealed class SkinRender3D : OpenGlControlBase, ICustomHitTest {
     private DateTime _time;
 
     public static readonly StyledProperty<bool> EnableAnimationProperty =
-        AvaloniaProperty.Register<SkinRender3D, bool>("EnableAnimation", defaultValue: false);
+        AvaloniaProperty.Register<SkinRender3D, bool>("EnableAnimation", defaultValue: true);
 
     public static readonly StyledProperty<bool> CapeVisibilityProperty =
         AvaloniaProperty.Register<SkinRender3D, bool>("CapeVisibility", defaultValue: true);
@@ -211,6 +211,7 @@ public sealed class SkinRender3D : OpenGlControlBase, ICustomHitTest {
             EnableCape = CapeVisibility,
             EnableTop = UpperLayerVisibility,
             Animation = EnableAnimation,
+            RenderType = SkinRenderMode.MSAA,
         };
         _skin.Error += delegate (object? _, ErrorType type) {
             Debug.WriteLine(type.ToString());
@@ -243,7 +244,7 @@ public sealed class SkinRender3D : OpenGlControlBase, ICustomHitTest {
         }
 
         //_skin.ArmRotate = new(0, Random.Shared.Next(0, 720), 0);
-        if (!EnableAnimation) {
+        if (EnableAnimation) {
             RequestNextFrameRendering();
         }
     }

@@ -9,5 +9,6 @@
 	<lsv:SkinRender3D Focusable="True"
 					  Background="red"
 					  Name="skinViewer"
+					  EnableAnimation="True"
 					  CapeVisibility="True"/>
 </Window>

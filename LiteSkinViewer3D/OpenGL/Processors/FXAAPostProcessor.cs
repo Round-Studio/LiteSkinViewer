@@ -66,7 +66,7 @@ public sealed class FXAAPostProcessor : IDisposable {
         gl.DrawArrays(gl.GL_TRIANGLE_STRIP, 0, 4);
 
         gl.BindVertexArray(0);
-        gl.BindTexture(gl.GL_TEXTURE_2D, 0);
+        gl.BindTexture(gl.GL_TEXTURE_2D, _texture);
         gl.UseProgram(0);
 
         gl.Disable(gl.GL_BLEND);
