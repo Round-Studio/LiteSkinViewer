@@ -101,6 +101,7 @@ public abstract class SkinViewerBase {
             _switchModel = true;
         }
     }
+
     /// <summary>
     /// 背景色
     /// </summary>

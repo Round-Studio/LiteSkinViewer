@@ -49,11 +49,8 @@ public class OpenGLSkinViewerBase : SkinViewerBase {
         _textureProcessor = new SkinTextureProcessor(_gl, IsGLES);
         _textureProcessor.Initialize();
 
-        _msaaProcessor = new MSAAPostProcessor(_gl);
-        //_msaaProcessor.Initialize(Width, Height);
-
         _fxaaProcessor = new FXAAPostProcessor(_gl, IsGLES);
-        //_fxaaProcessor.Initialize(Width, Height);
+        _msaaProcessor = new MSAAPostProcessor(_gl);
     }
 
     public unsafe void OpenGlRender(int fb) {
@@ -80,16 +77,14 @@ public class OpenGLSkinViewerBase : SkinViewerBase {
 
         int renderTarget = _renderType switch {
             SkinRenderMode.MSAA => _msaaProcessor.Framebuffer,
-            SkinRenderMode.FXAA => _fxaaProcessor.SourceFramebuffer,
+            SkinRenderMode.FXAA => _fxaaProcessor.Framebuffer,
             _ => fb
         };
 
         _gl.BindFramebuffer(_gl.GL_FRAMEBUFFER, renderTarget);
         _gl.Viewport(0, 0, _width, _height);
-        _gl.ClearColor(_renderType == SkinRenderMode.FXAA ? 1 : _backColor.X,
-                      _renderType == SkinRenderMode.FXAA ? 1 : _backColor.Y,
-                      _renderType == SkinRenderMode.FXAA ? 1 : _backColor.Z,
-                      _renderType == SkinRenderMode.FXAA ? 1 : _backColor.W);
+        _gl.ClearColor(_backColor.X, _backColor.Y, _backColor.Z, _backColor.W);
+
         _gl.ClearDepth(1.0f);
         _gl.Clear(_gl.GL_COLOR_BUFFER_BIT | _gl.GL_DEPTH_BUFFER_BIT);
 
@@ -119,9 +114,9 @@ public class OpenGLSkinViewerBase : SkinViewerBase {
         }
 
         if (_renderType == SkinRenderMode.MSAA)
-            _msaaProcessor.ResolveTo(fb, _width, _height);
+            _msaaProcessor?.ResolveTo(fb, _width, _height);
         else if (_renderType == SkinRenderMode.FXAA)
-            _fxaaProcessor.Render(fb);
+            _fxaaProcessor?.Render(fb);
 
         CheckError();
     }
