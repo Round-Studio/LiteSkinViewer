@@ -2,9 +2,7 @@
 using LiteSkinViewer3D.Shared.Helpers;
 using LiteSkinViewer3D.Shared.Models;
 using SkiaSharp;
-using System.Diagnostics;
 using System.Numerics;
-using System.Text.RegularExpressions;
 
 namespace LiteSkinViewer3D.Shared;
 
@@ -349,7 +347,7 @@ public abstract class SkinViewerBase {
                 Matrix4x4.CreateTranslation(0, Cube.Value * 1.5f, 0),
 
             ModelComponent.Body =>
-                Matrix4x4.CreateTranslation(0, 0, 0) *
+                Matrix4x4.CreateTranslation(_skina.State.BodyTranslation) *
                 Matrix4x4.CreateRotationZ(GetRot(_skina.State.Body, Vector3.Zero).X / 360f) *
                 Matrix4x4.CreateRotationX(GetRot(_skina.State.Body, Vector3.Zero).Y / 360f) *
                 Matrix4x4.CreateRotationY(GetRot(_skina.State.Body, Vector3.Zero).Z / 360f),
