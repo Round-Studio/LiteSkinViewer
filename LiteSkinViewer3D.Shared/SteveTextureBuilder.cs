@@ -25,7 +25,7 @@ public static class SteveTextureBuilder {
         24f, 0f, 24f, 8f, 16f, 8f, 16f, 0f
     ];
 
-    private static readonly float[] _legArmTex = [
+    private static readonly float[] _armTex = [
         // back
         12f, 4f, 12f, 16f, 16f, 16f, 16f, 4f,
         // front
@@ -38,6 +38,21 @@ public static class SteveTextureBuilder {
         4f, 0f, 4f, 4f, 8f, 4f, 8f, 0f,
         // bottom
         12f, 0f, 12f, 4f, 8f, 4f, 8f, 0f,
+    ];
+
+    private static readonly float[] _legTex = [
+        // back
+        12f, 4f, 12f, 16f, 16f, 16f, 16f, 4f,
+        // front
+        4f, 4f, 4f, 16f, 8f, 16f, 8f, 4f,
+        // left
+        8f, 4f, 8f, 16f, 12f, 16f, 12f, 4f,
+        // right
+        0f, 4f, 0f, 16f, 4f, 16f, 4f, 4f,
+        // top
+        4f, 0f, 4f, 4f, 8f, 4f, 8f, 0f,
+        // bottom
+        8f, 0f, 8f, 4f, 12f, 4f, 12f, 0f,
     ];
 
     private static readonly float[] _slimArmTex = [
@@ -95,11 +110,11 @@ public static class SteveTextureBuilder {
 
         if (type != SkinType.Legacy) {
             tex.Body = GetTex(_bodyTex, type, 16f, 32f);
-            var armTex = type == SkinType.Slim ? _slimArmTex : _legArmTex;
+            var armTex = type == SkinType.Slim ? _slimArmTex : _armTex;
             tex.LeftArm = GetTex(armTex, type, 48f, 48f);
             tex.RightArm = GetTex(armTex, type, 40f, 32f);
-            tex.LeftLeg = GetTex(_legArmTex, type, 0f, 48f);
-            tex.RightLeg = GetTex(_legArmTex, type, 0f, 32f);
+            tex.LeftLeg = GetTex(_legTex, type, 0f, 48f);
+            tex.RightLeg = GetTex(_legTex, type, 0f, 32f);
         }
 
         return tex;
@@ -116,16 +131,16 @@ public static class SteveTextureBuilder {
         };
 
         if (type == SkinType.Legacy) {
-            tex.LeftArm = GetTex(_legArmTex, type, 40f, 16f);
-            tex.RightArm = GetTex(_legArmTex, type, 40f, 16f);
-            tex.LeftLeg = GetTex(_legArmTex, type, 0f, 16f);
-            tex.RightLeg = GetTex(_legArmTex, type, 0f, 16f);
+            tex.LeftArm = GetTex(_armTex, type, 40f, 16f);
+            tex.RightArm = GetTex(_armTex, type, 40f, 16f);
+            tex.LeftLeg = GetTex(_legTex, type, 0f, 16f);
+            tex.RightLeg = GetTex(_legTex, type, 0f, 16f);
         } else {
-            var armTex = type == SkinType.Slim ? _slimArmTex : _legArmTex;
+            var armTex = type == SkinType.Slim ? _slimArmTex : _armTex;
             tex.LeftArm = GetTex(armTex, type, 32f, 48f);
             tex.RightArm = GetTex(armTex, type, 40f, 16f);
-            tex.LeftLeg = GetTex(_legArmTex, type, 0f, 16f);
-            tex.RightLeg = GetTex(_legArmTex, type, 16f, 48f);
+            tex.LeftLeg = GetTex(_legTex, type, 0f, 16f);
+            tex.RightLeg = GetTex(_legTex, type, 16f, 48f);
         }
 
         return tex;
