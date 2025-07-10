@@ -14,5 +14,7 @@ public partial class App : Application {
         }
 
         base.OnFrameworkInitializationCompleted();
+
+        new MainWindow().Show();
     }
 }

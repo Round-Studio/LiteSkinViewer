@@ -193,6 +193,7 @@ public sealed class SkinViewer3D : OpenGlControlBase, ICustomHitTest {
                 width = (int)(base.Bounds.Width * renderScaling);
                 height = (int)(base.Bounds.Height * renderScaling);
             }
+
             _skin.Width = width;
             _skin.Height = height;
             if (_time.Year == 1) {
@@ -206,9 +207,8 @@ public sealed class SkinViewer3D : OpenGlControlBase, ICustomHitTest {
             CheckError(gl);
         }
 
-        if (IsEnableAnimation && IsVisible && Opacity != 0 && Skin != null) {
+        if (IsEnableAnimation && IsVisible && Opacity != 0 && Skin != null)
             RequestNextFrameRendering();
-        }
     }
 
     protected override void OnOpenGlDeinit(GlInterface gl) {
