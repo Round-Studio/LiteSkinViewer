@@ -75,7 +75,7 @@ public class OpenGLSkinViewerBase : SkinViewerBase {
             _msaaProcessor.Resize(_width, _height);
         }
 
-        int renderTarget = _renderType switch {
+        int renderTarget = _renderMode switch {
             SkinRenderMode.MSAA => _msaaProcessor.Framebuffer,
             SkinRenderMode.FXAA => _fxaaProcessor.Framebuffer,
             _ => fb
@@ -113,9 +113,9 @@ public class OpenGLSkinViewerBase : SkinViewerBase {
             _gl.Disable(_gl.GL_BLEND);
         }
 
-        if (_renderType == SkinRenderMode.MSAA)
+        if (_renderMode == SkinRenderMode.MSAA)
             _msaaProcessor?.ResolveTo(fb, _width, _height);
-        else if (_renderType == SkinRenderMode.FXAA)
+        else if (_renderMode == SkinRenderMode.FXAA)
             _fxaaProcessor?.Render(fb);
 
         CheckError();
@@ -123,7 +123,7 @@ public class OpenGLSkinViewerBase : SkinViewerBase {
 
     public unsafe void OpenGlDeinit() {
         // 关闭贴图资源或纹理流
-        _skina.Close();
+        _skinAnimationController.Close();
 
         // 解绑所有 GL 状态，避免悬挂引用
         _gl.BindBuffer(_gl.GL_ARRAY_BUFFER, 0);

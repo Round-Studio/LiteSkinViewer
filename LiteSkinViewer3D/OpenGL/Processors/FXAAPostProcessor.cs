@@ -14,12 +14,12 @@ public sealed class FXAAPostProcessor : IDisposable {
     private int _uniformTexelStep;
 
     // x, y, u, v （UV 范围为 [0, 1]）
-    private readonly float[] quadVertices = {
+    private readonly float[] quadVertices = [
         -1f,  1f, 0f, 1f,
         -1f, -1f, 0f, 0f,
          1f,  1f, 1f, 1f,
          1f, -1f, 1f, 0f
-    };
+    ];
 
     public int ColorTexture => _texture;
     public int Framebuffer => _frameBuffer;

@@ -1,4 +1,5 @@
-﻿using LiteSkinViewer3D.Shared.Enums;
+﻿using Avalonia.Media.Imaging;
+using LiteSkinViewer3D.Shared.Enums;
 using SkiaSharp;
 
 namespace LiteSkinViewer3D.Shared.Helpers;
@@ -8,6 +9,15 @@ namespace LiteSkinViewer3D.Shared.Helpers;
 /// </summary>
 public static class SkinHelper {
     private const int BaseSize = 64;
+
+    public static SKBitmap Convert(Bitmap bitmap) {
+        using var stream = new MemoryStream();
+
+        bitmap.Save(stream);
+        stream.Position = 0;
+
+        return SKBitmap.Decode(stream);
+    }
 
     /// <summary>
     /// 检测皮肤类型

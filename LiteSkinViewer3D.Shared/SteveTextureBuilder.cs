@@ -168,6 +168,7 @@ public static class SteveTextureBuilder {
             float divisor = (a % 2 == 0) ? width : (type == SkinType.Legacy ? LegacyHeight : height);
             temp[a] = value / divisor;
         }
+
         return temp;
     }
 }

@@ -16,7 +16,7 @@ public abstract class SkinViewerBase {
     protected bool _animation;
 
     protected Vector4 _backColor;
-    protected SkinRenderMode _renderType;
+    protected SkinRenderMode _renderMode;
     protected SkinType _skinType = SkinType.Unknown;
 
     protected int _fps;
@@ -41,7 +41,7 @@ public abstract class SkinViewerBase {
     /// </summary>
     protected SKBitmap? _cape;
 
-    protected readonly SkinAnimationController _skina;
+    protected readonly SkinAnimationController _skinAnimationController;
 
     /// <summary>
     /// 渲染出错
@@ -75,29 +75,21 @@ public abstract class SkinViewerBase {
     /// 模型动画
     /// </summary>
     public bool Animation {
-        get { return _animation; }
-        set {
-            if (value) {
-                _skina.IsEnable = true;
-            } else {
-                _skina.IsEnable = false;
-            }
-
-            _animation = value;
-        }
+        get => _animation;
+        set => _animation = _skinAnimationController.IsEnable = value;
     }
 
     /// <summary>
     /// 皮肤类型
     /// </summary>
     public SkinType SkinType {
-        get { return _skinType; }
+        get => _skinType;
         set {
             if (_skinType == value) {
                 return;
             }
             _skinType = value;
-            _skina.SkinType = value;
+            _skinAnimationController.SkinType = value;
             _switchModel = true;
         }
     }
@@ -116,10 +108,10 @@ public abstract class SkinViewerBase {
     /// <summary>
     /// 渲染类型
     /// </summary>
-    public SkinRenderMode RenderType {
-        get { return _renderType; }
+    public SkinRenderMode RenderMode {
+        get { return _renderMode; }
         set {
-            _renderType = value;
+            _renderMode = value;
             _switchType = true;
         }
     }
@@ -134,6 +126,7 @@ public abstract class SkinViewerBase {
             _switchType = true;
         }
     }
+
     /// <summary>
     /// 是否启用第二层渲染
     /// </summary>
@@ -164,8 +157,8 @@ public abstract class SkinViewerBase {
     public event Action<object?, int>? FpsUpdate;
 
     public SkinViewerBase() {
-        _skina = new();
         _last = Matrix4x4.Identity;
+        _skinAnimationController = new();
     }
 
     /// <summary>
@@ -265,9 +258,6 @@ public abstract class SkinViewerBase {
             HaveSkin = false;
             return;
         }
-        if (skin.Width != 64) {
-            throw new Exception("This is not skin image");
-        }
 
         _skinTex = skin;
 
@@ -311,13 +301,13 @@ public abstract class SkinViewerBase {
     /// </summary>
     /// <param name="time"></param>
     public void Tick(double time) {
-        if (_animation) {
-            _skina.Tick(time);
-        }
+        if (_animation)
+            _skinAnimationController.Tick(time);
 
         if (_rotXY.X != 0 || _rotXY.Y != 0) {
             _last *= Matrix4x4.CreateRotationX(_rotXY.X / 360)
                     * Matrix4x4.CreateRotationY(_rotXY.Y / 360);
+
             _rotXY.X = 0;
             _rotXY.Y = 0;
         }
@@ -342,50 +332,50 @@ public abstract class SkinViewerBase {
         return component switch {
             ModelComponent.Head =>
                 Matrix4x4.CreateTranslation(0, Cube.Value * 2.5f, 0) *
-                Matrix4x4.CreateRotationZ(GetRot(_skina.State.Head, HeadRotate).Z / 360f) *
-                Matrix4x4.CreateRotationX(GetRot(_skina.State.Head, HeadRotate).X / 360f) *
-                Matrix4x4.CreateRotationY(GetRot(_skina.State.Head, HeadRotate).Y / 360f) *
-                Matrix4x4.CreateTranslation(_skina.State.BodyTranslation),
+                Matrix4x4.CreateRotationZ(GetRot(_skinAnimationController.State.Head, HeadRotate).Z / 360f) *
+                Matrix4x4.CreateRotationX(GetRot(_skinAnimationController.State.Head, HeadRotate).X / 360f) *
+                Matrix4x4.CreateRotationY(GetRot(_skinAnimationController.State.Head, HeadRotate).Y / 360f) *
+                Matrix4x4.CreateTranslation(_skinAnimationController.State.BodyTranslation),
 
             ModelComponent.Body =>
-                Matrix4x4.CreateTranslation(_skina.State.BodyTranslation) *
-                Matrix4x4.CreateRotationZ(GetRot(_skina.State.Body, Vector3.Zero).Z / 360f) *
-                Matrix4x4.CreateRotationX(GetRot(_skina.State.Body, Vector3.Zero).X / 360f) *
-                Matrix4x4.CreateRotationY(GetRot(_skina.State.Body, Vector3.Zero).Y / 360f),
+                Matrix4x4.CreateTranslation(_skinAnimationController.State.BodyTranslation) *
+                Matrix4x4.CreateRotationZ(GetRot(_skinAnimationController.State.Body, Vector3.Zero).Z / 360f) *
+                Matrix4x4.CreateRotationX(GetRot(_skinAnimationController.State.Body, Vector3.Zero).X / 360f) *
+                Matrix4x4.CreateRotationY(GetRot(_skinAnimationController.State.Body, Vector3.Zero).Y / 360f),
 
             ModelComponent.ArmLeft =>
                 Matrix4x4.CreateTranslation(+Cube.Value / 2f, -armWidth * Cube.Value, 0) *
-                Matrix4x4.CreateRotationZ(GetRot(_skina.State.ArmLeft, ArmRotate).Z / 360f) *
-                Matrix4x4.CreateRotationY(GetRot(_skina.State.ArmLeft, ArmRotate).Y / 360f) *
-                Matrix4x4.CreateRotationX(GetRot(_skina.State.ArmLeft, ArmRotate).X / 360f) *
+                Matrix4x4.CreateRotationZ(GetRot(_skinAnimationController.State.ArmLeft, ArmRotate).Z / 360f) *
+                Matrix4x4.CreateRotationY(GetRot(_skinAnimationController.State.ArmLeft, ArmRotate).Y / 360f) *
+                Matrix4x4.CreateRotationX(GetRot(_skinAnimationController.State.ArmLeft, ArmRotate).X / 360f) *
                 Matrix4x4.CreateTranslation(armWidth * Cube.Value - Cube.Value / 2f, armWidth * Cube.Value, 0) *
-                Matrix4x4.CreateTranslation(_skina.State.ArmLeftTranslation),
+                Matrix4x4.CreateTranslation(_skinAnimationController.State.ArmLeftTranslation),
 
             ModelComponent.ArmRight =>
                 Matrix4x4.CreateTranslation(-Cube.Value / 2f, -armWidth * Cube.Value, 0) *
-                Matrix4x4.CreateRotationZ(GetRot(_skina.State.ArmRight, ArmRotate, mirror: true).Z / 360f) *
-                Matrix4x4.CreateRotationY(GetRot(_skina.State.ArmRight, ArmRotate, mirror: true).Y / 360f) *
-                Matrix4x4.CreateRotationX(GetRot(_skina.State.ArmRight, ArmRotate, mirror: true).X / 360f) *
+                Matrix4x4.CreateRotationZ(GetRot(_skinAnimationController.State.ArmRight, ArmRotate, mirror: true).Z / 360f) *
+                Matrix4x4.CreateRotationY(GetRot(_skinAnimationController.State.ArmRight, ArmRotate, mirror: true).Y / 360f) *
+                Matrix4x4.CreateRotationX(GetRot(_skinAnimationController.State.ArmRight, ArmRotate, mirror: true).X / 360f) *
                 Matrix4x4.CreateTranslation(-armWidth * Cube.Value + Cube.Value / 2f, armWidth * Cube.Value, 0) *
-                Matrix4x4.CreateTranslation(_skina.State.ArmRightTranslation),
+                Matrix4x4.CreateTranslation(_skinAnimationController.State.ArmRightTranslation),
 
             ModelComponent.LegLeft =>
                 Matrix4x4.CreateTranslation(0, -1.5f * Cube.Value, 0) *
-                Matrix4x4.CreateRotationZ(GetRot(_skina.State.LegLeft, LegRotate).Z / 360f) *
-                Matrix4x4.CreateRotationY(GetRot(_skina.State.LegLeft, LegRotate).Y / 360f) *
-                Matrix4x4.CreateRotationX(GetRot(_skina.State.LegLeft, LegRotate).X / 360f) *
+                Matrix4x4.CreateRotationZ(GetRot(_skinAnimationController.State.LegLeft, LegRotate).Z / 360f) *
+                Matrix4x4.CreateRotationY(GetRot(_skinAnimationController.State.LegLeft, LegRotate).Y / 360f) *
+                Matrix4x4.CreateRotationX(GetRot(_skinAnimationController.State.LegLeft, LegRotate).X / 360f) *
                 Matrix4x4.CreateTranslation(Cube.Value * 0.5f, -Cube.Value * 1.5f, 0),
 
             ModelComponent.LegRight =>
                 Matrix4x4.CreateTranslation(0, -1.5f * Cube.Value, 0) *
-                Matrix4x4.CreateRotationZ(GetRot(_skina.State.LegRight, LegRotate, mirror: true).Z / 360f) *
-                Matrix4x4.CreateRotationY(GetRot(_skina.State.LegRight, LegRotate, mirror: true).Y / 360f) *
-                Matrix4x4.CreateRotationX(GetRot(_skina.State.LegRight, LegRotate, mirror: true).X / 360f) *
+                Matrix4x4.CreateRotationZ(GetRot(_skinAnimationController.State.LegRight, LegRotate, mirror: true).Z / 360f) *
+                Matrix4x4.CreateRotationY(GetRot(_skinAnimationController.State.LegRight, LegRotate, mirror: true).Y / 360f) *
+                Matrix4x4.CreateRotationX(GetRot(_skinAnimationController.State.LegRight, LegRotate, mirror: true).X / 360f) *
                 Matrix4x4.CreateTranslation(-Cube.Value * 0.5f, -Cube.Value * 1.5f, 0),
 
             ModelComponent.Cape =>
                 Matrix4x4.CreateTranslation(0, -2f * Cube.Value, -Cube.Value * 0.1f) *
-                Matrix4x4.CreateRotationX((float)((enable ? 11.8 + _skina.State.Cape : 6.3) * Math.PI / 180)) *
+                Matrix4x4.CreateRotationX((float)((enable ? 11.8 + _skinAnimationController.State.Cape : 6.3) * Math.PI / 180)) *
                 Matrix4x4.CreateTranslation(0, 1.6f * Cube.Value, -Cube.Value * 0.5f),
 
             ModelComponent.ModelMatrix =>
