@@ -20,6 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LiteSkinViewer3D\LiteSkinViewer3D.csproj" />
+    <ProjectReference Include="..\LiteSkinViewer.3D\LiteSkinViewer.3D.csproj" />
   </ItemGroup>
 </Project>
