@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiteSkinViewer.3D.Shared", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiteSkinViewer.3D.Simple", "LiteSkinViewer.3D.Simple\LiteSkinViewer.3D.Simple.csproj", "{DFDE430F-CC5F-5ADD-5AE7-40CB318A6635}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiteSkinViewer.2D", "LiteSkinViewer.2D\LiteSkinViewer.2D.csproj", "{2EA1686D-E3DE-4914-BD3F-1D42AA87E35A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiteSkinViewer.2D.Simple", "LiteSkinViewer.2D.Simple\LiteSkinViewer.2D.Simple.csproj", "{84B2D9B8-DC7A-4F43-AB49-2C31E16E9F33}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{DFDE430F-CC5F-5ADD-5AE7-40CB318A6635}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DFDE430F-CC5F-5ADD-5AE7-40CB318A6635}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DFDE430F-CC5F-5ADD-5AE7-40CB318A6635}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2EA1686D-E3DE-4914-BD3F-1D42AA87E35A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2EA1686D-E3DE-4914-BD3F-1D42AA87E35A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2EA1686D-E3DE-4914-BD3F-1D42AA87E35A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2EA1686D-E3DE-4914-BD3F-1D42AA87E35A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84B2D9B8-DC7A-4F43-AB49-2C31E16E9F33}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84B2D9B8-DC7A-4F43-AB49-2C31E16E9F33}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84B2D9B8-DC7A-4F43-AB49-2C31E16E9F33}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84B2D9B8-DC7A-4F43-AB49-2C31E16E9F33}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
