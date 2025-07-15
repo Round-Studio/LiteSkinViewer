@@ -8,6 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LiteSkinViewer.3D.Shared\LiteSkinViewer.3D.Shared.csproj" />
+    <ProjectReference Include="..\LiteSkinViewer.Shared\LiteSkinViewer.Shared.csproj" />
   </ItemGroup>
 </Project>
