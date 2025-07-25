@@ -3,8 +3,8 @@
 
 ## 🧩 技术基础
 
-本项目的大部分渲染逻辑基于 [MinecraftSkinRender](https://github.com/Coloryr/MinecraftSkinRender) 进行改进与封装。  
-在保留其核心功能的基础上，LiteSkinViewer 对渲染模块进行了定制化，以适配 Avalonia UI 框架，并提升图形性能。
+LiteSkinViewer 构建于 [Coloryr/MinecraftSkinRender](https://github.com/Coloryr/MinecraftSkinRender) 项目的 OpenGL 实现部分基础之上。  
+本项目在原始实现的框架上进行了基础封装和部分重写
 
 ## 🌟 特性
 - 支持皮肤的 3D 模型展示
@@ -21,3 +21,15 @@
 
 ```bash
 git clone https://github.com/YangSpring429/LiteSkinViewer.git
+```
+
+## 📄 版权声明
+
+LiteSkinViewer 使用并改进了 [Coloryr/MinecraftSkinRender](https://github.com/Coloryr/MinecraftSkinRender) 项目中的源代码
+该项目遵循 **Apache License 2.0**，因此本项目同样遵守该许可协议的所有要求，包括：
+
+- 明确注明原始项目及其作者：MinecraftSkinRender by Coloryr  
+- 提供完整的 LICENSE 文件与 NOTICE 文件（建议添加至仓库根目录）
+- 不使用原始作者的商标、Logo 或名称进行暗示性背书
+
+LiteSkinViewer 在尊重原始项目的基础上进行了封装、重构与扩展，所有基于其源代码的部分均遵循 Apache 2.0 协议进行使用和分发
