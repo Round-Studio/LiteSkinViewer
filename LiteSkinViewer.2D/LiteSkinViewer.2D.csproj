@@ -11,4 +11,8 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\LiteSkinViewer.Shared\LiteSkinViewer.Shared.csproj" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="SkiaSharp" Version="3.119.1" />
+	</ItemGroup>
 </Project>
