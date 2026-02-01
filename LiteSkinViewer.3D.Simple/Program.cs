@@ -1,14 +1,21 @@
-﻿using Avalonia;
-using System;
+﻿using System;
+using Avalonia;
 
 namespace LiteSkinViewer3D.Simple;
-internal class Program {
+
+internal class Program
+{
     [STAThread]
-    public static void Main(string[] args) => BuildAvaloniaApp()
-        .StartWithClassicDesktopLifetime(args);
+    public static void Main(string[] args)
+    {
+        BuildAvaloniaApp()
+            .StartWithClassicDesktopLifetime(args);
+    }
 
     public static AppBuilder BuildAvaloniaApp()
-        => AppBuilder.Configure<App>()
+    {
+        return AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .LogToTrace();
+    }
 }

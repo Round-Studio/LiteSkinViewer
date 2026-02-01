@@ -4,10 +4,12 @@ using SkiaSharp;
 
 namespace LiteSkinViewer2D;
 
-public sealed class HeadCapturer : ICapturer {
+public sealed class HeadCapturer : ICapturer
+{
     public static readonly HeadCapturer Default = new();
 
-    public unsafe SKBitmap Capture(SKBitmap skin, int scale = 8) {
+    public SKBitmap Capture(SKBitmap skin, int scale = 8)
+    {
         const int CANVAS_SIZE = 72;
         const int HEAD_BLOCK = 8;
         const int HEAD_SRC_X = 8;

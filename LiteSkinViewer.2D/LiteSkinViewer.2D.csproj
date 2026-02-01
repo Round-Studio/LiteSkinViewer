@@ -1,18 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>LiteSkinViewer2D</RootNamespace>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <RootNamespace>LiteSkinViewer2D</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
 
-	<ItemGroup>
-	  <ProjectReference Include="..\LiteSkinViewer.Shared\LiteSkinViewer.Shared.csproj" />
-	</ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\LiteSkinViewer.Shared\LiteSkinViewer.Shared.csproj"/>
+    </ItemGroup>
 
-	<ItemGroup>
-	  <PackageReference Include="SkiaSharp" Version="2.88.9" />
-	</ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="SkiaSharp" Version="2.88.9"/>
+    </ItemGroup>
 </Project>

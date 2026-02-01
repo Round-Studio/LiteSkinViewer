@@ -6,8 +6,8 @@ using SkiaSharp;
 
 namespace LiteSkinViewer2D;
 
-public sealed class FullBodyCapturer : ICapturer {
-
+public sealed class FullBodyCapturer : ICapturer
+{
     public static readonly FullBodyCapturer Default = new();
 
     //public SKBitmap Capture(SKBitmap image, SkinType? type = null) {
@@ -94,7 +94,8 @@ public sealed class FullBodyCapturer : ICapturer {
     //    return image2.Copy();
     //}
 
-    public unsafe SKBitmap Capture(SKBitmap skin, int scale = 8) {
+    public SKBitmap Capture(SKBitmap skin, int scale = 8)
+    {
         const int RAW_W = 136, RAW_H = 266;
         var skintype = SkinHelper.DetectSkin(skin);
         var frame = new SKBitmap(RAW_W, RAW_H);
@@ -102,10 +103,13 @@ public sealed class FullBodyCapturer : ICapturer {
         skin.CopyBlock(frame, 8, 8, 8, 8, 4 + 8 * 4, 4, 8, 8);
         skin.CopyBlock(frame, 20, 20, 8, 12, 4 + 8 * 4, 4 + 8 * 8, 8, 8);
 
-        if (skintype == SkinType.Slim) {
+        if (skintype == SkinType.Slim)
+        {
             skin.CopyBlock(frame, 44, 20, 3, 12, 4 + 1 * 8, 4 + 8 * 8, 8, 8);
             skin.CopyBlock(frame, 36, 52, 3, 12, 4 + 12 * 8, 4 + 8 * 8, 8, 8);
-        } else {
+        }
+        else
+        {
             skin.CopyBlock(frame, 44, 20, 4, 12, 4, 4 + 8 * 8, 8, 8);
             if (skintype == SkinType.Legacy)
                 skin.CopyBlockMirror(frame, 44, 20, 4, 12, 4 + 12 * 8, 4 + 8 * 8, 8);
@@ -119,17 +123,21 @@ public sealed class FullBodyCapturer : ICapturer {
         else
             skin.CopyBlock(frame, 20, 52, 4, 12, 4 + 8 * 8, 4 + 20 * 8, 8, 8);
 
-        if (skintype is SkinType.Classic or SkinType.Slim) {
+        if (skintype is SkinType.Classic or SkinType.Slim)
+        {
             skin.CopyBlockBlend(frame, 20, 36, 8, 12, 4 * 8, 8 * 8 - 2, 9, 9);
             skin.CopyBlockBlend(frame, 40, 8, 8, 8, 4 * 9 - 4, 0, 9, 9);
             skin.CopyBlockBlend(frame, 4, 36, 4, 12, 4 * 8 + 2, 20 * 8 - 2, 9, 9);
             skin.CopyBlockBlend(frame, 4, 52, 4, 12, 8 * 8 + 2, 20 * 8 - 2, 9, 9);
         }
 
-        if (skintype == SkinType.Slim) {
+        if (skintype == SkinType.Slim)
+        {
             skin.CopyBlockBlend(frame, 44, 36, 3, 12, 1 * 8 + 1, 8 * 8 + 2, 9, 9);
             skin.CopyBlockBlend(frame, 52, 52, 3, 12, 12 * 8 + 4, 8 * 8 + 2, 9, 9);
-        } else if (skintype == SkinType.Classic) {
+        }
+        else if (skintype == SkinType.Classic)
+        {
             skin.CopyBlockBlend(frame, 44, 36, 4, 12, 0, 8 * 8 + 2, 9, 9);
             skin.CopyBlockBlend(frame, 52, 52, 4, 12, 12 * 8 + 4, 8 * 8 + 2, 9, 9);
         }
