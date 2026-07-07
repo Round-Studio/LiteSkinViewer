@@ -21,6 +21,7 @@ public partial class MainWindow : Window
         base.OnLoaded(e);
 
         PART_DoubleRenderCheckBox.IsCheckedChanged += OnPART_DoubleRenderCheckBoxIsCheckedChanged;
+        PART_TopLayer3DCheckBox.IsCheckedChanged += OnPART_TopLayer3DCheckBoxIsCheckedChanged;
         PART_CapeRenderCheckBox.IsCheckedChanged += OnPART_CapeRenderCheckBoxIsCheckedChanged;
         PART_AniamtionCheckBox.IsCheckedChanged += OnPART_AniamtionCheckBoxIsCheckedChanged;
         PART_AAComboBox.SelectionChanged += OnPART_AAComboBoxSelectionChanged;
@@ -31,12 +32,17 @@ public partial class MainWindow : Window
         skinViewer.PointerPressed += SkinViewer_PointerPressed;
         skinViewer.PointerReleased += SkinViewer_PointerReleased;
 
-        PART_SkinTextBox.Text = "C:\\Users\\wxysd\\Desktop\\skin.png";
+        PART_SkinTextBox.Text = @"E:\5708204257247427216.png";
     }
 
     private void OnPART_DoubleRenderCheckBoxIsCheckedChanged(object? sender, RoutedEventArgs e)
     {
         skinViewer.IsUpperLayerVisible = PART_DoubleRenderCheckBox.IsChecked!.Value;
+    }
+
+    private void OnPART_TopLayer3DCheckBoxIsCheckedChanged(object? sender, RoutedEventArgs e)
+    {
+        skinViewer.IsTopLayer3D = PART_TopLayer3DCheckBox.IsChecked!.Value;
     }
 
     private void OnPART_CapeRenderCheckBoxIsCheckedChanged(object? sender, RoutedEventArgs e)

@@ -159,29 +159,32 @@ internal static class GLSLSource
                                                    #define COMPAT_TEXTURE texture2D
                                                    #endif
                                                    
-                                                   COMPAT_ATTRIBUTE vec3 a_position;
-                                                   COMPAT_ATTRIBUTE vec2 a_texCoord;
-                                                   COMPAT_ATTRIBUTE vec3 a_normal;
-                                                   
-                                                   uniform mat4 model;
-                                                   uniform mat4 projection;
-                                                   uniform mat4 view;
-                                                   uniform mat4 self;
-                                                   
-                                                   COMPAT_VARYING vec3 normalIn;
-                                                   COMPAT_VARYING vec2 texIn;
-                                                   COMPAT_VARYING vec3 fragPosIn;
-                                                   
-                                                   void main()
-                                                   {
-                                                       texIn = a_texCoord;
-                                                   
-                                                       mat4 temp = view * model * self;
-                                                   
-                                                       fragPosIn = vec3(model * vec4(a_position, 1.0));
-                                                       normalIn = normalize(vec3(model * vec4(a_normal, 1.0)));
-                                                       gl_Position = projection * temp * vec4(a_position, 1.0);
-                                                   }
+                                                    COMPAT_ATTRIBUTE vec3 a_position;
+                                                    COMPAT_ATTRIBUTE vec2 a_texCoord;
+                                                    COMPAT_ATTRIBUTE vec3 a_normal;
+                                                    COMPAT_ATTRIBUTE vec3 a_color;
+                                                    
+                                                    uniform mat4 model;
+                                                    uniform mat4 projection;
+                                                    uniform mat4 view;
+                                                    uniform mat4 self;
+                                                    
+                                                    COMPAT_VARYING vec3 normalIn;
+                                                    COMPAT_VARYING vec2 texIn;
+                                                    COMPAT_VARYING vec3 fragPosIn;
+                                                    COMPAT_VARYING vec3 colorIn;
+                                                    
+                                                    void main()
+                                                    {
+                                                        texIn = a_texCoord;
+                                                        colorIn = a_color;
+                                                    
+                                                        mat4 temp = view * model * self;
+                                                    
+                                                        fragPosIn = vec3(model * vec4(a_position, 1.0));
+                                                        normalIn = normalize(vec3(model * vec4(a_normal, 1.0)));
+                                                        gl_Position = projection * temp * vec4(a_position, 1.0);
+                                                    }
                                                """;
 
     internal const string FragmentShaderSource = """
@@ -208,27 +211,36 @@ internal static class GLSLSource
                                                      #endif
                                                      #endif
                                                      
-                                                     uniform sampler2D texture0;
-                                                     
-                                                     COMPAT_VARYING vec3 fragPosIn;
-                                                     COMPAT_VARYING vec3 normalIn;
-                                                     COMPAT_VARYING vec2 texIn;
-                                                     
-                                                     void main() {
-                                                         vec3 lightColor = vec3(1.0, 1.0, 1.0);
-                                                         float ambientStrength = 0.15;
-                                                         vec3 lightPos = vec3(0, 1, 5);
-                                                     
-                                                         vec3 ambient = ambientStrength * lightColor;
-                                                         vec3 norm = normalize(normalIn);
-                                                         vec3 lightDir = normalize(lightPos - fragPosIn);
-                                                     
-                                                         // 半兰伯特光照
-                                                         float diff = dot(norm, lightDir) * 0.5 + 0.5;
-                                                         vec3 diffuse = diff * lightColor;
-                                                     
-                                                         vec3 result = ambient + diffuse;
-                                                         FragColor = COMPAT_TEXTURE(texture0, texIn) * vec4(result, 1.0);
-                                                     }
+                                                      uniform sampler2D texture0;
+                                                      uniform float u_alphaDiscard;
+                                                      uniform int u_useVertexColor;
+                                                      
+                                                      COMPAT_VARYING vec3 fragPosIn;
+                                                      COMPAT_VARYING vec3 normalIn;
+                                                      COMPAT_VARYING vec2 texIn;
+                                                      COMPAT_VARYING vec3 colorIn;
+                                                      
+                                                      void main() {
+                                                          vec3 lightColor = vec3(1.0, 1.0, 1.0);
+                                                          float ambientStrength = 0.15;
+                                                          vec3 lightPos = vec3(0, 1, 5);
+                                                      
+                                                          vec3 ambient = ambientStrength * lightColor;
+                                                          vec3 norm = normalize(normalIn);
+                                                          vec3 lightDir = normalize(lightPos - fragPosIn);
+                                                      
+                                                          // 半兰伯特光照
+                                                          float diff = dot(norm, lightDir) * 0.5 + 0.5;
+                                                          vec3 diffuse = diff * lightColor;
+                                                      
+                                                          vec3 result = ambient + diffuse;
+                                                          vec4 texColor;
+                                                          if (u_useVertexColor == 1)
+                                                              texColor = vec4(colorIn, 1.0);
+                                                          else
+                                                              texColor = COMPAT_TEXTURE(texture0, texIn);
+                                                          if (u_alphaDiscard > 0.5 && texColor.a < 0.5) discard;
+                                                          FragColor = texColor * vec4(result, 1.0);
+                                                      }
                                                  """;
 }

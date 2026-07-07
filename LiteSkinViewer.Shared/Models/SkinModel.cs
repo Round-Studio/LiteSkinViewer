@@ -38,3 +38,27 @@ public record SteveTextureLayout
     public float[] RightArm;
     public float[] RightLeg;
 }
+
+/// <summary>
+///     单个 Voxel 叠加层部件（顶点 + 颜色 + 法线 + 索引）
+/// </summary>
+public record VoxelOverlayPart
+{
+    public float[] Vertices;
+    public float[] Colors;
+    public float[] Normals;
+    public ushort[] Indices;
+}
+
+/// <summary>
+///     Voxel 叠加层数据，按身体部件分组
+/// </summary>
+public record VoxelOverlayData
+{
+    public VoxelOverlayPart Head;
+    public VoxelOverlayPart Body;
+    public VoxelOverlayPart LeftArm;
+    public VoxelOverlayPart RightArm;
+    public VoxelOverlayPart LeftLeg;
+    public VoxelOverlayPart RightLeg;
+}

@@ -41,7 +41,8 @@
                        FontSize="14"
                        FontWeight="SemiBold" />
 
-            <Grid ColumnDefinitions="* * *">
+            <Grid RowDefinitions="Auto,Auto"
+                  ColumnDefinitions="* * *">
                 <CheckBox Content="启用模型动画"
                           IsChecked="True"
                           Name="PART_AniamtionCheckBox"
@@ -59,6 +60,12 @@
                           Name="PART_DoubleRenderCheckBox"
                           HorizontalAlignment="Center"
                           Grid.Column="2" />
+
+                <CheckBox Content="第二层 3D 渲染"
+                          Name="PART_TopLayer3DCheckBox"
+                          HorizontalAlignment="Center"
+                          Grid.Row="1"
+                          Grid.ColumnSpan="3" />
             </Grid>
         </StackPanel>
     </Grid>

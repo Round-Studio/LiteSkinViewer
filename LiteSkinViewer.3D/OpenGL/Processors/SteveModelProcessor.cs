@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using LiteSkinViewer3D.Shared;
 using LiteSkinViewer3D.Shared.Enums;
 using LiteSkinViewer3D.Shared.Models;
+using SkiaSharp;
 
 namespace LiteSkinViewer3D.OpenGL.Processors;
 
@@ -19,6 +20,10 @@ internal sealed class SteveModelProcessor : IDisposable
 
     public SteveModelBindings BaseVAO { get; } = new();
     public SteveModelBindings OverlayVAO { get; } = new();
+    public SteveModelBindings VoxelVAO { get; } = new();
+
+    /// <summary>每个身体部件的 Voxel 索引数量（按 Head,Body,LeftArm,RightArm,LeftLeg,RightLeg 顺序）</summary>
+    public int[] VoxelIndexCounts { get; } = new int[6];
 
     public int DrawIndexCount { get; private set; }
 
@@ -26,12 +31,14 @@ internal sealed class SteveModelProcessor : IDisposable
     {
         DeleteVAO(BaseVAO);
         DeleteVAO(OverlayVAO);
+        DeleteVAO(VoxelVAO);
     }
 
     public void Initialize(SkinType type)
     {
         InitVAO(BaseVAO);
         InitVAO(OverlayVAO);
+        InitVAO(VoxelVAO);
         Load(type);
     }
 
@@ -80,6 +87,76 @@ internal sealed class SteveModelProcessor : IDisposable
             PutVAO(OverlayVAO.LeftLeg, overlayModel.LeftLeg, overlayTexture.LeftLeg);
             PutVAO(OverlayVAO.RightLeg, overlayModel.RightLeg, overlayTexture.RightLeg);
         }
+    }
+
+    public void LoadVoxel(SKBitmap skin, SkinType type)
+    {
+        var data = VoxelOverlayGenerator.Generate(skin, type);
+
+        var parts = new (VoxelOverlayPart part, MeshBinding binding)[]
+        {
+            (data.Head, VoxelVAO.Head),
+            (data.Body, VoxelVAO.Body),
+            (data.LeftArm, VoxelVAO.LeftArm),
+            (data.RightArm, VoxelVAO.RightArm),
+            (data.LeftLeg, VoxelVAO.LeftLeg),
+            (data.RightLeg, VoxelVAO.RightLeg)
+        };
+
+        for (var pi = 0; pi < parts.Length; pi++)
+        {
+            var (part, binding) = parts[pi];
+            VoxelIndexCounts[pi] = part.Indices.Length;
+            PutColoredVAO(binding, part);
+        }
+    }
+
+    private unsafe void PutColoredVAO(MeshBinding mb, VoxelOverlayPart part)
+    {
+        gl.UseProgram(shaderProgram);
+        gl.BindVertexArray(mb.VertexArrayObject);
+
+        var posLoc = gl.GetAttribLocation(shaderProgram, "a_position");
+        var colorLoc = gl.GetAttribLocation(shaderProgram, "a_color");
+        var normLoc = gl.GetAttribLocation(shaderProgram, "a_normal");
+
+        var vertexCount = part.Vertices.Length / 3;
+        var vertices = new ColoredVertexDataGL[vertexCount];
+
+        for (var i = 0; i < vertexCount; i++)
+        {
+            int vi = i * 3, ci = i * 3, ni = i * 3;
+            vertices[i] = new ColoredVertexDataGL
+            {
+                Position = new Vector3(part.Vertices[vi], part.Vertices[vi + 1], part.Vertices[vi + 2]),
+                Color = new Vector3(part.Colors[ci], part.Colors[ci + 1], part.Colors[ci + 2]),
+                Normal = new Vector3(part.Normals[ni], part.Normals[ni + 1], part.Normals[ni + 2])
+            };
+        }
+
+        gl.BindBuffer(gl.GL_ARRAY_BUFFER, mb.VertexBufferObject);
+        fixed (void* ptr = vertices)
+        {
+            gl.BufferData(gl.GL_ARRAY_BUFFER, vertexCount * Marshal.SizeOf<ColoredVertexDataGL>(), new IntPtr(ptr),
+                gl.GL_STATIC_DRAW);
+        }
+
+        gl.BindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, mb.IndexBufferObject);
+        fixed (void* iptr = part.Indices)
+        {
+            gl.BufferData(gl.GL_ELEMENT_ARRAY_BUFFER, part.Indices.Length * sizeof(ushort), new IntPtr(iptr),
+                gl.GL_STATIC_DRAW);
+        }
+
+        gl.VertexAttribPointer(posLoc, 3, gl.GL_FLOAT, false, 9 * sizeof(float), 0);
+        gl.VertexAttribPointer(colorLoc, 3, gl.GL_FLOAT, false, 9 * sizeof(float), 3 * sizeof(float));
+        gl.VertexAttribPointer(normLoc, 3, gl.GL_FLOAT, false, 9 * sizeof(float), 6 * sizeof(float));
+
+        gl.EnableVertexAttribArray(posLoc);
+        gl.EnableVertexAttribArray(colorLoc);
+        gl.EnableVertexAttribArray(normLoc);
+
+        gl.BindVertexArray(0);
     }
 
     private unsafe void PutVAO(MeshBinding mb, CubeItemModel model, float[] uv)

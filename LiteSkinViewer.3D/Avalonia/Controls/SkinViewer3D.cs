@@ -31,6 +31,9 @@ public sealed class SkinViewer3D : OpenGlControlBase, ICustomHitTest
     public static readonly StyledProperty<bool> IsUpperLayerVisibleProperty =
         AvaloniaProperty.Register<SkinViewer3D, bool>(nameof(IsUpperLayerVisible), true);
 
+    public static readonly StyledProperty<bool> IsTopLayer3DProperty =
+        AvaloniaProperty.Register<SkinViewer3D, bool>(nameof(IsTopLayer3D), false);
+
     public static readonly StyledProperty<SkinRenderMode> RenderModeProperty =
         AvaloniaProperty.Register<SkinViewer3D, SkinRenderMode>(nameof(RenderMode), SkinRenderMode.FXAA);
 
@@ -90,6 +93,12 @@ public sealed class SkinViewer3D : OpenGlControlBase, ICustomHitTest
     {
         get => GetValue(IsUpperLayerVisibleProperty);
         set => SetValue(IsUpperLayerVisibleProperty, value);
+    }
+
+    public bool IsTopLayer3D
+    {
+        get => GetValue(IsTopLayer3DProperty);
+        set => SetValue(IsTopLayer3DProperty, value);
     }
 
     public float ModelDistance
@@ -201,7 +210,8 @@ public sealed class SkinViewer3D : OpenGlControlBase, ICustomHitTest
             RenderMode = RenderMode,
             EnableCape = IsCapeVisible,
             Animation = IsEnableAnimation,
-            EnableTop = IsUpperLayerVisible
+            EnableTop = IsUpperLayerVisible,
+            EnableTopLayer3D = IsTopLayer3D
         };
 
         _skin.Error += (_, type) =>
@@ -277,6 +287,14 @@ public sealed class SkinViewer3D : OpenGlControlBase, ICustomHitTest
         {
             if (_skin != null)
                 _skin.EnableTop = IsUpperLayerVisible;
+
+            RequestNextFrameRendering();
+        }
+
+        if (change.Property == IsTopLayer3DProperty)
+        {
+            if (_skin != null)
+                _skin.EnableTopLayer3D = IsTopLayer3D;
 
             RequestNextFrameRendering();
         }

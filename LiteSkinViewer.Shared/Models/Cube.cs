@@ -49,7 +49,7 @@ public static class Cube
     ///     方块的 24 个顶点位置坐标（按面展开）
     ///     每个面 4 个点，共 6 个面
     /// </summary>
-    private static readonly Vector3[] _positions =
+    public static readonly Vector3[] Positions =
     [
         // Back (-Z)
         new(Value, Value, -Value),
@@ -92,7 +92,7 @@ public static class Cube
     ///     每个顶点对应的法线（方向指向该面外侧），用于光照计算
     ///     顺序与 _positions 匹配
     /// </summary>
-    private static readonly Vector3[] _normals =
+    public static readonly Vector3[] Normals =
     [
         // Back
         Vector3.UnitZ * -1, Vector3.UnitZ * -1, Vector3.UnitZ * -1, Vector3.UnitZ * -1,
@@ -130,8 +130,8 @@ public static class Cube
     /// <returns>处理后的顶点坐标数组</returns>
     public static Vector3[] GetTransformedVertices(Vector3 scale, Vector3 offset)
     {
-        var result = new Vector3[_positions.Length];
-        for (var i = 0; i < _positions.Length; i++) result[i] = Vector3.Multiply(_positions[i], scale) + offset;
+        var result = new Vector3[Positions.Length];
+        for (var i = 0; i < Positions.Length; i++) result[i] = Vector3.Multiply(Positions[i], scale) + offset;
         return result;
     }
 
@@ -140,7 +140,7 @@ public static class Cube
     /// </summary>
     public static Vector3[] GetNormals()
     {
-        return _normals;
+        return Normals;
     }
 
     /// <summary>

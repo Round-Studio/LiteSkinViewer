@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using LiteSkinViewer3D.OpenGL.Processors;
 using LiteSkinViewer3D.Shared;
@@ -17,6 +18,7 @@ public class OpenGLSkinViewerBase : SkinViewerBase
     private MSAAPostProcessor? _msaaProcessor;
     private SkinTextureProcessor? _textureProcessor;
     private int _width, _height, _drawIndexCount, _programId;
+    private bool _switchVoxel;
 
     public OpenGLSkinViewerBase(OpenGLApi gl, bool isGLES = false)
     {
@@ -62,12 +64,19 @@ public class OpenGLSkinViewerBase : SkinViewerBase
             _textureProcessor.Load(_skinTex!, _cape, _skinType);
             _switchSkin = false;
             _switchModel = true;
+            _switchVoxel = true;
         }
 
         if (_switchModel)
         {
             _modelProcessor.Load(_skinType);
             _switchModel = false;
+        }
+
+        if (_switchVoxel)
+        {
+            _modelProcessor.LoadVoxel(_skinTex!, _skinType);
+            _switchVoxel = false;
         }
 
         if (!HaveSkin || Width == 0 || Height == 0)
@@ -110,15 +119,32 @@ public class OpenGLSkinViewerBase : SkinViewerBase
 
         if (_enableTop)
         {
-            _gl.DepthMask(false);
-            _gl.Enable(_gl.GL_BLEND);
-            _gl.Enable(_gl.GL_SAMPLE_ALPHA_TO_COVERAGE);
-            _gl.BlendFunc(_gl.GL_SRC_ALPHA, _gl.GL_ONE_MINUS_SRC_ALPHA);
+            if (_enableTopLayer3D)
+            {
+                var useVtxColorLoc = _gl.GetUniformLocation(_programId, "u_useVertexColor");
+                _gl.Uniform1i(useVtxColorLoc, 1);
 
-            RenderSkinTop();
+                _gl.DepthMask(true);
+                _gl.Disable(_gl.GL_BLEND);
+                _gl.Disable(_gl.GL_SAMPLE_ALPHA_TO_COVERAGE);
+                _gl.Enable(_gl.GL_CULL_FACE);
 
-            _gl.DepthMask(true);
-            _gl.Disable(_gl.GL_BLEND);
+                RenderVoxelOverlay();
+
+                _gl.Uniform1i(useVtxColorLoc, 0);
+            }
+            else
+            {
+                _gl.DepthMask(false);
+                _gl.Enable(_gl.GL_BLEND);
+                _gl.Enable(_gl.GL_SAMPLE_ALPHA_TO_COVERAGE);
+                _gl.BlendFunc(_gl.GL_SRC_ALPHA, _gl.GL_ONE_MINUS_SRC_ALPHA);
+
+                RenderSkinTop();
+
+                _gl.DepthMask(true);
+                _gl.Disable(_gl.GL_BLEND);
+            }
         }
 
         if (_renderMode == SkinRenderMode.MSAA)
@@ -218,6 +244,29 @@ public class OpenGLSkinViewerBase : SkinViewerBase
         }
 
         _gl.BindTexture(_gl.GL_TEXTURE_2D, 0);
+    }
+
+    private unsafe void RenderVoxelOverlay()
+    {
+        var modelLoc = _gl.GetUniformLocation(_programId, "self");
+        var parts = new (ModelComponent comp, MeshBinding vao, int idxCount)[]
+        {
+            (ModelComponent.Head, _modelProcessor.VoxelVAO.Head, _modelProcessor.VoxelIndexCounts[0]),
+            (ModelComponent.Body, _modelProcessor.VoxelVAO.Body, _modelProcessor.VoxelIndexCounts[1]),
+            (ModelComponent.ArmLeft, _modelProcessor.VoxelVAO.LeftArm, _modelProcessor.VoxelIndexCounts[2]),
+            (ModelComponent.ArmRight, _modelProcessor.VoxelVAO.RightArm, _modelProcessor.VoxelIndexCounts[3]),
+            (ModelComponent.LegLeft, _modelProcessor.VoxelVAO.LeftLeg, _modelProcessor.VoxelIndexCounts[4]),
+            (ModelComponent.LegRight, _modelProcessor.VoxelVAO.RightLeg, _modelProcessor.VoxelIndexCounts[5])
+        };
+
+        foreach (var (comp, vao, idxCount) in parts)
+        {
+            if (idxCount == 0) continue;
+            var mat = GetMatrix4(comp);
+            _gl.UniformMatrix4fv(modelLoc, 1, false, (float*)&mat);
+            _gl.BindVertexArray(vao.VertexArrayObject);
+            _gl.DrawElements(_gl.GL_TRIANGLES, idxCount, _gl.GL_UNSIGNED_SHORT, 0);
+        }
     }
 
     private unsafe void RenderCape()

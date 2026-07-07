@@ -22,6 +22,7 @@ public abstract class SkinViewerBase
     protected float _dis = 1;
     protected bool _enableCape;
     protected bool _enableTop;
+    protected bool _enableTopLayer3D;
 
     protected int _fps;
 
@@ -149,6 +150,19 @@ public abstract class SkinViewerBase
         set
         {
             _enableTop = value;
+            _switchType = true;
+        }
+    }
+
+    /// <summary>
+    ///     是否启用第二层 3D 渲染（替代透明叠加）
+    /// </summary>
+    public bool EnableTopLayer3D
+    {
+        get => _enableTopLayer3D;
+        set
+        {
+            _enableTopLayer3D = value;
             _switchType = true;
         }
     }
