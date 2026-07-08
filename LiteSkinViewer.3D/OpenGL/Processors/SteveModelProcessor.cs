@@ -278,7 +278,7 @@ internal sealed class SteveModelProcessor : IDisposable
         gl.BindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, mb.IndexBufferObject);
         fixed (void* iptr = mesh.Indices)
         {
-            gl.BufferData(gl.GL_ELEMENT_ARRAY_BUFFER, mesh.Indices.Length * sizeof(ushort), new IntPtr(iptr),
+            gl.BufferData(gl.GL_ELEMENT_ARRAY_BUFFER, mesh.Indices.Length * sizeof(uint), new IntPtr(iptr),
                 gl.GL_STATIC_DRAW);
         }
 

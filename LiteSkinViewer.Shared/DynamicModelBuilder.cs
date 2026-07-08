@@ -48,8 +48,8 @@ public static class DynamicModelBuilder
         var allVertices = new List<float>();
         var allUvs = new List<float>();
         var allNormals = new List<float>();
-        var allIndices = new List<ushort>();
-        ushort vertexOffset = 0;
+        var allIndices = new List<uint>();
+        int vertexOffset = 0;
 
         foreach (var bone in bones)
         {
@@ -71,29 +71,35 @@ public static class DynamicModelBuilder
             }
         }
 
-        model.Parts.Add(new DynamicMeshData
-        {
-            Vertices = allVertices.ToArray(),
-            Uvs = allUvs.ToArray(),
-            Normals = allNormals.ToArray(),
-            Indices = allIndices.ToArray()
-        });
-
         if (allVertices.Count > 0)
+        {
+            model.Parts.Add(new DynamicMeshData
+            {
+                Vertices = allVertices.ToArray(),
+                Uvs = allUvs.ToArray(),
+                Normals = allNormals.ToArray(),
+                Indices = allIndices.ToArray()
+            });
+        }
+
+        if (model.Parts.Count > 0)
         {
             model.IsDynamicModel = true;
 
-            var minX = float.MaxValue; var maxX = float.MinValue;
-            var minY = float.MaxValue; var maxY = float.MinValue;
-            var minZ = float.MaxValue; var maxZ = float.MinValue;
-            for (var i = 0; i < allVertices.Count; i += 3)
+            float minX = float.MaxValue, maxX = float.MinValue;
+            float minY = float.MaxValue, maxY = float.MinValue;
+            float minZ = float.MaxValue, maxZ = float.MinValue;
+            foreach (var part in model.Parts)
             {
-                if (allVertices[i] < minX) minX = allVertices[i];
-                if (allVertices[i] > maxX) maxX = allVertices[i];
-                if (allVertices[i + 1] < minY) minY = allVertices[i + 1];
-                if (allVertices[i + 1] > maxY) maxY = allVertices[i + 1];
-                if (allVertices[i + 2] < minZ) minZ = allVertices[i + 2];
-                if (allVertices[i + 2] > maxZ) maxZ = allVertices[i + 2];
+                for (var i = 0; i < part.Vertices.Length; i += 3)
+                {
+                    if (part.Vertices[i] < minX) minX = part.Vertices[i];
+                    if (part.Vertices[i] > maxX) maxX = part.Vertices[i];
+                    if (part.Vertices[i + 1] < minY) minY = part.Vertices[i + 1];
+                    if (part.Vertices[i + 1] > maxY) maxY = part.Vertices[i + 1];
+                    if (part.Vertices[i + 2] < minZ) minZ = part.Vertices[i + 2];
+                    if (part.Vertices[i + 2] > maxZ) maxZ = part.Vertices[i + 2];
+                }
             }
             model.CenterX = (minX + maxX) * 0.5f;
             model.CenterY = (minY + maxY) * 0.5f;
@@ -147,8 +153,8 @@ public static class DynamicModelBuilder
 
     private static void BuildCube(BedrockCube cube, Matrix4x4 boneTransform,
         float texWidth, float texHeight,
-        List<float> vertices, List<float> uvs, List<float> normals, List<ushort> indices,
-        ref ushort vertexOffset)
+        List<float> vertices, List<float> uvs, List<float> normals, List<uint> indices,
+        ref int vertexOffset)
     {
         var origin = new Vector3(cube.Origin[0], cube.Origin[1], cube.Origin[2]) * BedrockToModel;
         var size = new Vector3(cube.Size[0], cube.Size[1], cube.Size[2]) * BedrockToModel;
@@ -175,11 +181,11 @@ public static class DynamicModelBuilder
 
                 vertices.Add(worldPos.X);
                 vertices.Add(worldPos.Y);
-                vertices.Add(worldPos.Z);
+                vertices.Add(-worldPos.Z);
 
                 normals.Add(worldNormal.X);
                 normals.Add(worldNormal.Y);
-                normals.Add(worldNormal.Z);
+                normals.Add(-worldNormal.Z);
 
                 float texU, texV;
                 (texU, texV) = ComputeUv(face, vert, cornerIdx, u, v, w, h, d, mirror);
@@ -188,13 +194,13 @@ public static class DynamicModelBuilder
                 uvs.Add(texV / texHeight);
             }
 
-            var baseIdx = face * 4 + vertexOffset;
-            indices.Add((ushort)(baseIdx));
-            indices.Add((ushort)(baseIdx + 1));
-            indices.Add((ushort)(baseIdx + 2));
-            indices.Add((ushort)(baseIdx));
-            indices.Add((ushort)(baseIdx + 2));
-            indices.Add((ushort)(baseIdx + 3));
+            var baseIdx = (uint)(face * 4 + vertexOffset);
+            indices.Add(baseIdx);
+            indices.Add(baseIdx + 1);
+            indices.Add(baseIdx + 2);
+            indices.Add(baseIdx);
+            indices.Add(baseIdx + 2);
+            indices.Add(baseIdx + 3);
         }
 
         vertexOffset += 24;
@@ -277,8 +283,8 @@ public static class DynamicModelBuilder
 
     private static void BuildPolyMesh(object? polyMeshObj, Matrix4x4 boneTransform,
         float texWidth, float texHeight,
-        List<float> vertices, List<float> uvs, List<float> normals, List<ushort> indices,
-        ref ushort vertexOffset)
+        List<float> vertices, List<float> uvs, List<float> normals, List<uint> indices,
+        ref int vertexOffset)
     {
         var mesh = ParsePolyMesh(polyMeshObj);
         if (mesh == null || mesh.Polys.Count == 0)
@@ -325,14 +331,14 @@ public static class DynamicModelBuilder
             var worldPos = Vector3.Transform(localPos, boneTransform);
             vertices.Add(worldPos.X);
             vertices.Add(worldPos.Y);
-            vertices.Add(worldPos.Z);
+            vertices.Add(-worldPos.Z);
 
             var normArr = mesh.Normals[pv.NormIdx];
             var localNorm = new Vector3(normArr[0], normArr[1], normArr[2]);
             var worldNorm = Vector3.Normalize(Vector3.TransformNormal(localNorm, boneTransform));
             normals.Add(worldNorm.X);
             normals.Add(worldNorm.Y);
-            normals.Add(worldNorm.Z);
+            normals.Add(-worldNorm.Z);
 
             var uvArr = mesh.Uvs[pv.UvIdx];
             if (mesh.NormalizedUvs)
@@ -349,10 +355,10 @@ public static class DynamicModelBuilder
 
         foreach (var idx in polyIndices)
         {
-            indices.Add((ushort)(idx + vertexOffset));
+            indices.Add((uint)(idx + vertexOffset));
         }
 
-        vertexOffset += (ushort)polyVertices.Count;
+        vertexOffset += polyVertices.Count;
     }
 
     private struct PolyVertex : IEquatable<PolyVertex>
@@ -383,19 +389,19 @@ public static class DynamicModelBuilder
                 pv = v + d + (vertInFace is 0 or 3 ? 0 : h);
                 break;
             case 1:
-                pu = u + d + (vertInFace is 1 or 2 ? w : 0);
+                pu = u + d + (vertInFace is 2 or 3 ? w : 0);
                 pv = v + d + (vertInFace is 1 or 2 ? h : 0);
                 break;
             case 2:
                 pu = u + (vertInFace is 2 or 3 ? d : 0);
-                pv = v + d + (vertInFace is 0 or 1 ? 0 : h);
+                pv = v + d + (vertInFace is 0 or 3 ? 0 : h);
                 break;
             case 3:
                 pu = u + d + w + (vertInFace is 2 or 3 ? d : 0);
-                pv = v + d + (vertInFace is 0 or 1 ? 0 : h);
+                pv = v + d + (vertInFace is 0 or 3 ? 0 : h);
                 break;
             case 4:
-                pu = u + d + (vertInFace is 1 or 2 ? w : 0);
+                pu = u + d + (vertInFace is 2 or 3 ? w : 0);
                 pv = v + (vertInFace is 0 or 3 ? 0 : d);
                 break;
             case 5:

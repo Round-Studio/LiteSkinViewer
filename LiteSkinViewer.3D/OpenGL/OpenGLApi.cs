@@ -53,6 +53,7 @@ public abstract class OpenGLApi
     public readonly int GL_ONE_MINUS_SRC_ALPHA = 0x0303;
     public readonly int GL_ONE_MINUS_SRC_COLOR = 0x0301;
     public readonly int GL_POINT_SMOOTH = 0x0B10;
+    public readonly int GL_POLYGON_OFFSET_FILL = 0x8037;
     public readonly int GL_POLYGON_SMOOTH = 0x0B41;
     public readonly int GL_READ_FRAMEBUFFER = 0x8CA8;
     public readonly int GL_RENDERBUFFER = 0x8D41;
@@ -80,6 +81,7 @@ public abstract class OpenGLApi
     public readonly int GL_TRIANGLES = 0x0004;
     public readonly int GL_UNSIGNED_BYTE = 0x1401;
     public readonly int GL_UNSIGNED_SHORT = 0x1403;
+    public readonly int GL_UNSIGNED_INT = 0x1405;
     public readonly int GL_VALIDATE_STATUS = 0x8B83;
     public readonly int GL_VERSION = 0x1F02;
     public readonly int GL_VERTEX_ATTRIB_ARRAY_ENABLED = 0x8622;
@@ -161,4 +163,5 @@ public abstract class OpenGLApi
     public abstract void Uniform2f(int v, float width, float height);
     public abstract void DrawArrays(int type, int v1, int v2);
     public abstract void Uniform1f(int loc, float v);
+    public abstract void PolygonOffset(float factor, float units);
 }

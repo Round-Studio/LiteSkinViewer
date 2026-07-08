@@ -378,4 +378,14 @@ public class AvaloniaApi(GlInterface gl) : OpenGLApi
     {
         gl.Uniform1f(loc, v);
     }
+
+    public delegate void PolygonOffsetDel(float factor, float units);
+
+    public readonly PolygonOffsetDel GLPolygonOffset =
+        Marshal.GetDelegateForFunctionPointer<PolygonOffsetDel>(gl.GetProcAddress("glPolygonOffset"));
+
+    public override void PolygonOffset(float factor, float units)
+    {
+        GLPolygonOffset(factor, units);
+    }
 }

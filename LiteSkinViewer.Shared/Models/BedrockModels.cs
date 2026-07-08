@@ -95,7 +95,7 @@ public record DynamicMeshData
     public float[] Vertices { get; set; } = [];
     public float[] Uvs { get; set; } = [];
     public float[] Normals { get; set; } = [];
-    public ushort[] Indices { get; set; } = [];
+    public uint[] Indices { get; set; } = [];
 }
 
 public record DynamicModel

@@ -215,6 +215,10 @@ public class OpenGLSkinViewerBase : SkinViewerBase
     {
         _gl.BindTexture(_gl.GL_TEXTURE_2D, _textureProcessor.SkinTexture);
 
+        _gl.Disable(_gl.GL_CULL_FACE);
+        _gl.Enable(_gl.GL_POLYGON_OFFSET_FILL);
+        _gl.PolygonOffset(-1f, -1f);
+
         var modelLoc = _gl.GetUniformLocation(_programId, "self");
         var centering = _dynamicModel != null
             ? Matrix4x4.CreateTranslation(-_dynamicModel.CenterX, -_dynamicModel.CenterY, -_dynamicModel.CenterZ)
@@ -224,8 +228,11 @@ public class OpenGLSkinViewerBase : SkinViewerBase
         {
             _gl.UniformMatrix4fv(modelLoc, 1, false, (float*)&centering);
             _gl.BindVertexArray(_modelProcessor.DynamicVAOs[i].VertexArrayObject);
-            _gl.DrawElements(_gl.GL_TRIANGLES, _modelProcessor.DynamicIndexCounts[i], _gl.GL_UNSIGNED_SHORT, 0);
+            _gl.DrawElements(_gl.GL_TRIANGLES, _modelProcessor.DynamicIndexCounts[i], _gl.GL_UNSIGNED_INT, 0);
         }
+
+        _gl.Disable(_gl.GL_POLYGON_OFFSET_FILL);
+        _gl.Enable(_gl.GL_CULL_FACE);
 
         _gl.BindTexture(_gl.GL_TEXTURE_2D, 0);
     }
