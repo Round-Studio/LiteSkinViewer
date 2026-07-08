@@ -1,9 +1,7 @@
-using System.IO;
 using System.Numerics;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Media.Imaging;
 using LiteSkinViewer3D.Shared.Enums;
 using PointerType = LiteSkinViewer3D.Shared.Enums.PointerType;
 
@@ -31,8 +29,9 @@ public partial class MainWindow : Window
         skinViewer.PointerMoved += SkinViewer_PointerMoved;
         skinViewer.PointerPressed += SkinViewer_PointerPressed;
         skinViewer.PointerReleased += SkinViewer_PointerReleased;
+        skinViewer.PointerWheelChanged += SkinViewer_PointerWheelChanged;
 
-        PART_SkinTextBox.Text = @"E:\5708204257247427216.png";
+        PART_SkinTextBox.Text = @"D:\BedrockBoot\bedrock_versions\1.26.2\config\BedrockBoot2\isolation\Users\Shared\games\com.mojang\skin_packs\pack_1fd0779d707d418a9fb88e1d10437eb8\flyhigh.png";
     }
 
     private void OnPART_DoubleRenderCheckBoxIsCheckedChanged(object? sender, RoutedEventArgs e)
@@ -96,18 +95,18 @@ public partial class MainWindow : Window
 
     private void OnPART_SkinTextBoxTextChanged(object? sender, TextChangedEventArgs e)
     {
-        if (!File.Exists(PART_SkinTextBox.Text))
+        if (!System.IO.File.Exists(PART_SkinTextBox.Text))
             return;
 
-        skinViewer.Skin = new Bitmap(PART_SkinTextBox.Text);
+        skinViewer.Skin = PART_SkinTextBox.Text;
     }
 
     private void OnPART_CapeTextBoxTextChanged(object? sender, TextChangedEventArgs e)
     {
-        if (!File.Exists(PART_CapeTextBox.Text))
+        if (!System.IO.File.Exists(PART_CapeTextBox.Text))
             return;
 
-        skinViewer.Cape = new Bitmap(PART_CapeTextBox.Text);
+        skinViewer.Cape = PART_CapeTextBox.Text;
     }
 
     private void OnPART_AAComboBoxSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -119,5 +118,10 @@ public partial class MainWindow : Window
             2 => SkinRenderMode.MSAA,
             _ => SkinRenderMode.None
         };
+    }
+
+    private void SkinViewer_PointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    {
+        skinViewer.UpdatePointerWheelChanged(e.Delta.Y > 0);
     }
 }

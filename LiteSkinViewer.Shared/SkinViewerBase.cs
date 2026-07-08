@@ -38,6 +38,16 @@ public abstract class SkinViewerBase
     /// </summary>
     protected SKBitmap? _skinTex;
 
+    /// <summary>
+    ///     皮肤文件路径（4D 皮肤使用）
+    /// </summary>
+    protected string? _skinPath;
+
+    /// <summary>
+    ///     动态模型数据（从 geometry.json 解析）
+    /// </summary>
+    protected DynamicModel? _dynamicModel;
+
     protected SkinType _skinType = SkinType.Unknown;
     protected bool _switchBack;
     protected bool _switchModel;
@@ -294,10 +304,10 @@ public abstract class SkinViewerBase
     /// <summary>
     ///     设置皮肤贴图
     /// </summary>
-    /// <param name="skin"></param>
-    /// <exception cref="Exception"></exception>
     public void SetSkinTex(SKBitmap? skin)
     {
+        _skinPath = null;
+        _dynamicModel = null;
         _skinTex?.Dispose();
         if (skin == null)
         {
@@ -306,11 +316,55 @@ public abstract class SkinViewerBase
         }
 
         _skinTex = skin;
-
         _skinType = SkinHelper.DetectSkin(skin);
         _switchSkin = true;
         HaveSkin = true;
     }
+
+    /// <summary>
+    ///     通过文件路径设置皮肤（支持 4D 皮肤）
+    /// </summary>
+    public void SetSkin(string? path)
+    {
+        _skinTex?.Dispose();
+        _skinTex = null;
+
+        if (string.IsNullOrEmpty(path) || !File.Exists(path))
+        {
+            HaveSkin = false;
+            _skinPath = null;
+            _dynamicModel = null;
+            return;
+        }
+
+        _skinPath = path;
+        _skinTex = SKBitmap.Decode(path);
+        if (_skinTex == null)
+        {
+            HaveSkin = false;
+            return;
+        }
+
+        _skinType = SkinHelper.DetectSkin(_skinTex);
+
+        var geometry = BedrockGeometryParser.LoadGeometryFromSkinPath(path);
+        if (geometry != null && geometry.Bones.Count > 0)
+        {
+            _dynamicModel = DynamicModelBuilder.Build(geometry.Bones, _skinTex.Width, _skinTex.Height);
+        }
+        else
+        {
+            _dynamicModel = null;
+        }
+
+        _switchSkin = true;
+        HaveSkin = true;
+    }
+
+    /// <summary>
+    ///     是否有动态模型（4D 皮肤）
+    /// </summary>
+    public bool IsDynamicModel => _dynamicModel is { IsDynamicModel: true, Parts.Count: > 0 };
 
     /// <summary>
     ///     设置披风贴图
@@ -441,7 +495,7 @@ public abstract class SkinViewerBase
                 Matrix4x4.CreateScale(_dis),
 
             ModelComponent.ProjectionMatrix =>
-                Matrix4x4.CreatePerspectiveFieldOfView((float)Math.PI / 4, (float)Width / Height, 0.1f, 10.0f),
+                Matrix4x4.CreatePerspectiveFieldOfView((float)Math.PI / 4, (float)Width / Height, 0.05f, 100.0f),
 
             ModelComponent.ViewMatrix =>
                 Matrix4x4.CreateLookAt(new Vector3(0, 0, 7), Vector3.Zero, Vector3.UnitY),

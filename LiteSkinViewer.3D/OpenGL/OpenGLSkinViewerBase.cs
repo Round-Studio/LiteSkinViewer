@@ -61,7 +61,17 @@ public class OpenGLSkinViewerBase : SkinViewerBase
     {
         if (_switchSkin)
         {
-            _textureProcessor.Load(_skinTex!, _cape, _skinType);
+            if (IsDynamicModel && _dynamicModel != null)
+            {
+                _modelProcessor.LoadDynamic(_dynamicModel);
+            }
+            else
+            {
+                _modelProcessor.ClearDynamic();
+            }
+
+            if (_skinTex != null)
+                _textureProcessor.Load(_skinTex, _cape, _skinType);
             _switchSkin = false;
             _switchModel = true;
             _switchVoxel = true;
@@ -114,36 +124,43 @@ public class OpenGLSkinViewerBase : SkinViewerBase
         _gl.DepthMask(true);
         _gl.Disable(_gl.GL_BLEND);
 
-        RenderSkin();
-        RenderCape();
-
-        if (_enableTop)
+        if (IsDynamicModel && _modelProcessor.DynamicVAOs.Count > 0)
         {
-            if (_enableTopLayer3D)
+            RenderDynamicSkin();
+        }
+        else
+        {
+            RenderSkin();
+            RenderCape();
+
+            if (_enableTop)
             {
-                var useVtxColorLoc = _gl.GetUniformLocation(_programId, "u_useVertexColor");
-                _gl.Uniform1i(useVtxColorLoc, 1);
+                if (_enableTopLayer3D)
+                {
+                    var useVtxColorLoc = _gl.GetUniformLocation(_programId, "u_useVertexColor");
+                    _gl.Uniform1i(useVtxColorLoc, 1);
 
-                _gl.DepthMask(true);
-                _gl.Disable(_gl.GL_BLEND);
-                _gl.Disable(_gl.GL_SAMPLE_ALPHA_TO_COVERAGE);
-                _gl.Enable(_gl.GL_CULL_FACE);
+                    _gl.DepthMask(true);
+                    _gl.Disable(_gl.GL_BLEND);
+                    _gl.Disable(_gl.GL_SAMPLE_ALPHA_TO_COVERAGE);
+                    _gl.Enable(_gl.GL_CULL_FACE);
 
-                RenderVoxelOverlay();
+                    RenderVoxelOverlay();
 
-                _gl.Uniform1i(useVtxColorLoc, 0);
-            }
-            else
-            {
-                _gl.DepthMask(false);
-                _gl.Enable(_gl.GL_BLEND);
-                _gl.Enable(_gl.GL_SAMPLE_ALPHA_TO_COVERAGE);
-                _gl.BlendFunc(_gl.GL_SRC_ALPHA, _gl.GL_ONE_MINUS_SRC_ALPHA);
+                    _gl.Uniform1i(useVtxColorLoc, 0);
+                }
+                else
+                {
+                    _gl.DepthMask(false);
+                    _gl.Enable(_gl.GL_BLEND);
+                    _gl.Enable(_gl.GL_SAMPLE_ALPHA_TO_COVERAGE);
+                    _gl.BlendFunc(_gl.GL_SRC_ALPHA, _gl.GL_ONE_MINUS_SRC_ALPHA);
 
-                RenderSkinTop();
+                    RenderSkinTop();
 
-                _gl.DepthMask(true);
-                _gl.Disable(_gl.GL_BLEND);
+                    _gl.DepthMask(true);
+                    _gl.Disable(_gl.GL_BLEND);
+                }
             }
         }
 
@@ -192,6 +209,25 @@ public class OpenGLSkinViewerBase : SkinViewerBase
 
         _gl.DeleteProgram(_programId);
         _init = false;
+    }
+
+    private unsafe void RenderDynamicSkin()
+    {
+        _gl.BindTexture(_gl.GL_TEXTURE_2D, _textureProcessor.SkinTexture);
+
+        var modelLoc = _gl.GetUniformLocation(_programId, "self");
+        var centering = _dynamicModel != null
+            ? Matrix4x4.CreateTranslation(-_dynamicModel.CenterX, -_dynamicModel.CenterY, -_dynamicModel.CenterZ)
+            : Matrix4x4.Identity;
+
+        for (var i = 0; i < _modelProcessor.DynamicVAOs.Count; i++)
+        {
+            _gl.UniformMatrix4fv(modelLoc, 1, false, (float*)&centering);
+            _gl.BindVertexArray(_modelProcessor.DynamicVAOs[i].VertexArrayObject);
+            _gl.DrawElements(_gl.GL_TRIANGLES, _modelProcessor.DynamicIndexCounts[i], _gl.GL_UNSIGNED_SHORT, 0);
+        }
+
+        _gl.BindTexture(_gl.GL_TEXTURE_2D, 0);
     }
 
     private unsafe void RenderSkin()

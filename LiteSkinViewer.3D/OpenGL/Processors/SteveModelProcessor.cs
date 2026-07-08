@@ -22,6 +22,12 @@ internal sealed class SteveModelProcessor : IDisposable
     public SteveModelBindings OverlayVAO { get; } = new();
     public SteveModelBindings VoxelVAO { get; } = new();
 
+    /// <summary>动态模型 VAO 列表</summary>
+    public List<MeshBinding> DynamicVAOs { get; } = [];
+
+    /// <summary>动态模型各部分的索引数量</summary>
+    public List<int> DynamicIndexCounts { get; } = [];
+
     /// <summary>每个身体部件的 Voxel 索引数量（按 Head,Body,LeftArm,RightArm,LeftLeg,RightLeg 顺序）</summary>
     public int[] VoxelIndexCounts { get; } = new int[6];
 
@@ -40,6 +46,35 @@ internal sealed class SteveModelProcessor : IDisposable
         InitVAO(OverlayVAO);
         InitVAO(VoxelVAO);
         Load(type);
+    }
+
+    public void LoadDynamic(DynamicModel model)
+    {
+        foreach (var binding in DynamicVAOs)
+        {
+            DeleteVAOItem(binding);
+        }
+        DynamicVAOs.Clear();
+        DynamicIndexCounts.Clear();
+
+        foreach (var part in model.Parts)
+        {
+            var mb = new MeshBinding();
+            InitVAOItem(mb);
+            PutDynamicVAO(mb, part);
+            DynamicVAOs.Add(mb);
+            DynamicIndexCounts.Add(part.Indices.Length);
+        }
+    }
+
+    public void ClearDynamic()
+    {
+        foreach (var binding in DynamicVAOs)
+        {
+            DeleteVAOItem(binding);
+        }
+        DynamicVAOs.Clear();
+        DynamicIndexCounts.Clear();
     }
 
     private void InitVAOItem(MeshBinding item)
@@ -193,6 +228,57 @@ internal sealed class SteveModelProcessor : IDisposable
         fixed (void* iptr = model.Indices)
         {
             gl.BufferData(gl.GL_ELEMENT_ARRAY_BUFFER, model.Indices.Length * sizeof(ushort), new IntPtr(iptr),
+                gl.GL_STATIC_DRAW);
+        }
+
+        gl.VertexAttribPointer(posLoc, 3, gl.GL_FLOAT, false, 8 * sizeof(float), 0);
+        gl.VertexAttribPointer(texLoc, 2, gl.GL_FLOAT, false, 8 * sizeof(float), 3 * sizeof(float));
+        gl.VertexAttribPointer(normLoc, 3, gl.GL_FLOAT, false, 8 * sizeof(float), 5 * sizeof(float));
+
+        gl.EnableVertexAttribArray(posLoc);
+        gl.EnableVertexAttribArray(texLoc);
+        gl.EnableVertexAttribArray(normLoc);
+
+        gl.BindVertexArray(0);
+    }
+
+    private unsafe void PutDynamicVAO(MeshBinding mb, DynamicMeshData mesh)
+    {
+        gl.UseProgram(shaderProgram);
+        gl.BindVertexArray(mb.VertexArrayObject);
+
+        var posLoc = gl.GetAttribLocation(shaderProgram, "a_position");
+        var texLoc = gl.GetAttribLocation(shaderProgram, "a_texCoord");
+        var normLoc = gl.GetAttribLocation(shaderProgram, "a_normal");
+
+        var vertexCount = mesh.Vertices.Length / 3;
+        var vertices = new VertexDataGL[vertexCount];
+        var hasNormals = mesh.Normals.Length >= mesh.Vertices.Length;
+
+        for (var i = 0; i < vertexCount; i++)
+        {
+            int vi = i * 3, ui = i * 2;
+            vertices[i] = new VertexDataGL
+            {
+                Position = new Vector3(mesh.Vertices[vi], mesh.Vertices[vi + 1], mesh.Vertices[vi + 2]),
+                UV = new Vector2(mesh.Uvs[ui], mesh.Uvs[ui + 1]),
+                Normal = hasNormals
+                    ? new Vector3(mesh.Normals[vi], mesh.Normals[vi + 1], mesh.Normals[vi + 2])
+                    : new Vector3(0, 1, 0)
+            };
+        }
+
+        gl.BindBuffer(gl.GL_ARRAY_BUFFER, mb.VertexBufferObject);
+        fixed (void* ptr = vertices)
+        {
+            gl.BufferData(gl.GL_ARRAY_BUFFER, vertexCount * Marshal.SizeOf<VertexDataGL>(), new IntPtr(ptr),
+                gl.GL_STATIC_DRAW);
+        }
+
+        gl.BindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, mb.IndexBufferObject);
+        fixed (void* iptr = mesh.Indices)
+        {
+            gl.BufferData(gl.GL_ELEMENT_ARRAY_BUFFER, mesh.Indices.Length * sizeof(ushort), new IntPtr(iptr),
                 gl.GL_STATIC_DRAW);
         }
 

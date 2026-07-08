@@ -1,14 +1,14 @@
 ﻿using System.Diagnostics;
+using System.IO;
 using System.Numerics;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Media.Imaging;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
 using Avalonia.Rendering;
 using LiteSkinViewer3D.OpenGL;
 using LiteSkinViewer3D.Shared.Enums;
-using LiteSkinViewer3D.Shared.Helpers;
+using SkiaSharp;
 
 namespace LiteSkinViewer3D.Avalonia.Controls;
 
@@ -16,11 +16,11 @@ public sealed class SkinViewer3D : OpenGlControlBase, ICustomHitTest
 {
     private static readonly Vector2 DefaultModelPosition = new(0f, 0.5f);
 
-    public static readonly StyledProperty<Bitmap> SkinProperty =
-        AvaloniaProperty.Register<SkinViewer3D, Bitmap>(nameof(Skin));
+    public static readonly StyledProperty<string> SkinProperty =
+        AvaloniaProperty.Register<SkinViewer3D, string>(nameof(Skin));
 
-    public static readonly StyledProperty<Bitmap> CapeProperty =
-        AvaloniaProperty.Register<SkinViewer3D, Bitmap>(nameof(Cape));
+    public static readonly StyledProperty<string> CapeProperty =
+        AvaloniaProperty.Register<SkinViewer3D, string>(nameof(Cape));
 
     public static readonly StyledProperty<bool> IsEnableAnimationProperty =
         AvaloniaProperty.Register<SkinViewer3D, bool>(nameof(IsEnableAnimation), true);
@@ -65,13 +65,13 @@ public sealed class SkinViewer3D : OpenGlControlBase, ICustomHitTest
         _modelDistance = ModelDistance;
     }
 
-    public Bitmap Skin
+    public string Skin
     {
         get => GetValue(SkinProperty);
         set => SetValue(SkinProperty, value);
     }
 
-    public Bitmap Cape
+    public string Cape
     {
         get => GetValue(CapeProperty);
         set => SetValue(CapeProperty, value);
@@ -160,16 +160,19 @@ public sealed class SkinViewer3D : OpenGlControlBase, ICustomHitTest
         _skin?.AddDis(x);
     }
 
-    public void ChangeSkin(Bitmap skin, Bitmap cape = default!)
+    public void ChangeSkin(string skin, string cape = default!)
     {
-        if (skin is null && cape is null)
+        if (string.IsNullOrEmpty(skin) && string.IsNullOrEmpty(cape))
             return;
 
-        if (skin != null)
-            _skin!.SetSkinTex(SkinHelper.Convert(skin));
+        if (!string.IsNullOrEmpty(skin))
+            _skin!.SetSkin(skin);
 
-        if (cape != null)
-            _skin.SetCapeTex(SkinHelper.Convert(cape));
+        if (!string.IsNullOrEmpty(cape))
+        {
+            if (File.Exists(cape))
+                _skin.SetCapeTex(SKBitmap.Decode(cape));
+        }
 
         RequestNextFrameRendering();
     }
@@ -197,6 +200,15 @@ public sealed class SkinViewer3D : OpenGlControlBase, ICustomHitTest
         if (_skin != null && _skin.HaveSkin)
         {
             _skin.PointerReleased(type, point);
+            RequestNextFrameRendering();
+        }
+    }
+
+    public void UpdatePointerWheelChanged(bool isPost)
+    {
+        if (_skin != null && _skin.HaveSkin)
+        {
+            _skin.PointerWheelChanged(isPost);
             RequestNextFrameRendering();
         }
     }
@@ -244,7 +256,7 @@ public sealed class SkinViewer3D : OpenGlControlBase, ICustomHitTest
             CheckError(gl);
         }
 
-        if (IsEnableAnimation && IsVisible && Opacity > 0 && Skin != null)
+        if (IsEnableAnimation && IsVisible && Opacity > 0 && !string.IsNullOrEmpty(Skin))
             RequestNextFrameRendering();
     }
 
@@ -260,7 +272,7 @@ public sealed class SkinViewer3D : OpenGlControlBase, ICustomHitTest
 
         if (change.Property == SkinProperty || change.Property == CapeProperty)
             if (_skin != null)
-                ChangeSkin(Skin, Cape);
+                ChangeSkin(Skin ?? "", Cape ?? "");
 
         if (change.Property == RenderModeProperty)
         {
